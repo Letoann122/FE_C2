@@ -76,6 +76,11 @@ const routes = [
     component: () => import("../components/Client/TermsofUse/index.vue"),
     meta: { layout: "client", title: "Điều khoản sử dụng" },
   },
+  {
+    path: "/find-nearby",
+    component: () => import("../components/Client/FindNearby/index.vue"),
+    meta: { layout: "client", title: "Tìm điểm hiến gần đây" },
+  },
 
   // ===== ADMIN =====
   {
