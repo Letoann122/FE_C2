@@ -76,6 +76,16 @@ const routes = [
     component: () => import("../components/Client/TermsofUse/index.vue"),
     meta: { layout: "client", title: "Điều khoản sử dụng" },
   },
+  {
+    path: "/my-appointments",
+    component: () => import("../components/Client/MyAppointments/index.vue"),
+    meta: { layout: "client", title: "Lịch hẹn của tôi" },
+  },
+  {
+    path: "/my-appointments/:id",
+    component: () => import("../components/Client/AppointmentDetailHub/index.vue"),
+    meta: { layout: "client", title: "Phiếu hẹn của tôi" },
+  },
 
   // ===== ADMIN =====
   {
@@ -227,6 +237,12 @@ const routes = [
     meta: { layout: "Hospital", title: "Đổi mật khẩu" },
     beforeEnter: checkDoctor,
   },
+  {
+    path: "/Hospital/check-in-scanner",
+    component: () => import("../components/Hospital/CheckInScanner/index.vue"),
+    meta: { layout: "Hospital", title: "Checkin QR Code" },
+    beforeEnter: checkDoctor,
+  },
 
   // ===== DONOR =====
   {
@@ -263,6 +279,12 @@ const routes = [
     path: "/notification",
     component: () => import("../components/Client/notification/index.vue"),
     meta: { layout: "client", title: "Thông báo" },
+    beforeEnter: checkDonor,
+  },
+  {
+    path: "/check-in-qrcode",
+    component: () => import("../components/Client/QRcodeCheckin/index.vue"),
+    meta: { layout: "client", title: "QR Code" },
     beforeEnter: checkDonor,
   },
 

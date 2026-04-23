@@ -44,6 +44,11 @@
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
               <li>
+                <router-link class="dropdown-item" to="/my-appointments">
+                  Lịch hẹn của tôi
+                </router-link>
+              </li>
+              <li>
                 <router-link class="dropdown-item" to="/profile">Hồ sơ cá nhân</router-link>
               </li>
               <li>
