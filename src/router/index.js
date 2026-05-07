@@ -232,8 +232,41 @@ const routes = [
     meta: { layout: "Hospital", title: "Đổi mật khẩu" },
     beforeEnter: checkDoctor,
   },
-
+  {
+    path: "/Hospital/check-in-scanner",
+    name: "CheckInScanner",
+    component: () => import("../components/Hospital/CheckInScanner/index.vue"),
+    meta: { layout: "Hospital", title: "Quét mã check-in" },
+    beforeEnter: checkDoctor,
+  },
+  {
+    path: "/Hospital/today-checked-in",
+    component: () => import("../components/Hospital/TodayCheckedIn/index.vue"),
+    meta: { layout: "Hospital", title: "Check-in hôm nay" },
+    beforeEnter: checkDoctor,
+  },
   // ===== DONOR =====
+  {
+    path: "/my-appointments",
+    name: "MyAppointments",
+    component: () => import("../components/Client/MyAppointments/index.vue"),
+    meta: { layout: "client", title: "Lịch hẹn của tôi" },
+    beforeEnter: checkDonor,
+  },
+  {
+    path: "/my-appointments/:id",
+    name: "AppointmentDetailHub",
+    component: () => import("../components/Client/AppointmentDetailHub/index.vue"),
+    meta: { layout: "client", title: "Chi tiết lịch hẹn" },
+    beforeEnter: checkDonor,
+  },
+  {
+    path: "/my-appointments/:appointmentId/qr-checkin",
+    name: "QRCodeCheckin",
+    component: () => import("../components/Client/QRcodeCheckin/index.vue"),
+    meta: { layout: "client", title: "Mã QR check-in" },
+    beforeEnter: checkDonor,
+  },
   {
     path: "/campaigns/:id",
     component: () => import("../components/Client/CampaignDetail/index.vue"),
