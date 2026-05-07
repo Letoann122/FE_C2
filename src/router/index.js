@@ -239,6 +239,12 @@ const routes = [
     meta: { layout: "Hospital", title: "Quét mã check-in" },
     beforeEnter: checkDoctor,
   },
+  {
+    path: "/Hospital/today-checked-in",
+    component: () => import("../components/Hospital/TodayCheckedIn/index.vue"),
+    meta: { layout: "Hospital", title: "Check-in hôm nay" },
+    beforeEnter: checkDoctor,
+  },
   // ===== DONOR =====
   {
     path: "/my-appointments",

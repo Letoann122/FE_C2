@@ -1,10 +1,6 @@
 <template>
   <div class="top-wrapper">
-    <nav
-      ref="nav"
-      class="navbar navbar-expand-lg bg-white"
-      :class="{ 'fixed-top shadow-sm': isSticky }"
-    >
+    <nav ref="nav" class="navbar navbar-expand-lg bg-white" :class="{ 'fixed-top shadow-sm': isSticky }">
       <div class="container-fluid">
         <!-- BRAND -->
         <router-link class="navbar-brand fw-bold ms-3" to="/Hospital/dashboard">
@@ -13,12 +9,7 @@
         </router-link>
 
         <!-- Mobile Toggler -->
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarSupportedContent"
-        >
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
           <span class="navbar-toggler-icon"></span>
         </button>
 
@@ -26,64 +17,39 @@
           <!-- NAV MENU -->
           <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
             <li class="nav-item mx-3">
-              <router-link
-                class="nav-link"
-                to="/Hospital/dashboard"
-                exact-active-class="active"
-              >
+              <router-link class="nav-link" to="/Hospital/dashboard" exact-active-class="active">
                 Dashboard
               </router-link>
             </li>
 
             <li class="nav-item mx-3">
-              <router-link
-                class="nav-link"
-                to="/Hospital/blood-inventory"
-                exact-active-class="active"
-              >
+              <router-link class="nav-link" to="/Hospital/blood-inventory" exact-active-class="active">
                 Quản lý kho máu
               </router-link>
             </li>
 
             <li class="nav-item mx-3">
-              <router-link
-                class="nav-link"
-                to="/Hospital/donor-management"
-                exact-active-class="active"
-              >
+              <router-link class="nav-link" to="/Hospital/donor-management" exact-active-class="active">
                 Quản lý Donor
               </router-link>
             </li>
 
             <li class="nav-item mx-3">
-              <router-link
-                class="nav-link"
-                to="/Hospital/check-booking"
-                exact-active-class="active"
-              >
+              <router-link class="nav-link" to="/Hospital/check-booking" exact-active-class="active">
                 Quản lý đặt lịch
               </router-link>
             </li>
 
             <li class="nav-item mx-3">
-              <router-link
-                class="nav-link"
-                to="/Hospital/donation-complete"
-                exact-active-class="active"
-              >
+              <router-link class="nav-link" to="/Hospital/donation-complete" exact-active-class="active">
                 Ghi nhận hiến máu
               </router-link>
             </li>
 
             <!-- DROPDOWN: CHIẾN DỊCH -->
             <li class="nav-item dropdown mx-3">
-              <a
-                class="nav-link dropdown-toggle"
-                href="#"
-                data-bs-toggle="dropdown"
-                :class="{ active: isCampaignActive || isNewsActive }"
-                @click.prevent
-              >
+              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown"
+                :class="{ active: isCampaignActive || isNewsActive }" @click.prevent>
                 Chiến dịch
               </a>
               <ul class="dropdown-menu">
@@ -101,24 +67,15 @@
             </li>
 
             <li class="nav-item mx-3">
-              <router-link
-                class="nav-link"
-                to="/Hospital/support"
-                exact-active-class="active"
-              >
+              <router-link class="nav-link" to="/Hospital/support" exact-active-class="active">
                 Tư vấn & Hỗ trợ
               </router-link>
             </li>
 
             <!-- ✅ DROPDOWN: BÁO CÁO -->
             <li class="nav-item dropdown mx-3">
-              <a
-                class="nav-link dropdown-toggle"
-                href="#"
-                data-bs-toggle="dropdown"
-                :class="{ active: isReportActive || isBloodLogActive }"
-                @click.prevent
-              >
+              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown"
+                :class="{ active: isReportActive || isBloodLogActive }" @click.prevent>
                 Báo cáo
               </a>
 
@@ -129,13 +86,12 @@
                   </router-link>
                 </li>
 
-                <li><hr class="dropdown-divider" /></li>
+                <li>
+                  <hr class="dropdown-divider" />
+                </li>
 
                 <li>
-                  <router-link
-                    class="dropdown-item"
-                    to="/Hospital/blood-inventory/log"
-                  >
+                  <router-link class="dropdown-item" to="/Hospital/blood-inventory/log">
                     Nhật ký kho máu
                   </router-link>
                 </li>
@@ -151,11 +107,8 @@
           </div>
 
           <div v-else class="dropdown">
-            <a
-              class="d-flex align-items-center text-decoration-none dropdown-toggle text-secondary fw-semibold"
-              href="#"
-              data-bs-toggle="dropdown"
-            >
+            <a class="d-flex align-items-center text-decoration-none dropdown-toggle text-secondary fw-semibold"
+              href="#" data-bs-toggle="dropdown">
               Xin chào, {{ user.full_name }}
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
