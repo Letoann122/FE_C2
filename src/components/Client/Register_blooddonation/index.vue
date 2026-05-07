@@ -93,22 +93,27 @@
           <div class="d-flex justify-content-between align-items-start border rounded-3 p-3 bg-white">
             <div class="me-3">
               <p class="fw-semibold mb-1">{{ selectedSite.name }}</p>
-              <small class="text-secondary d-block mb-1">{{
-                selectedSite.address
-                }}</small>
+              <small class="text-secondary d-block mb-1">{{ selectedSite.address }}</small>
               <small class="text-muted">({{ selectedSite.hospital_name }})</small>
             </div>
-            <span class="badge rounded-pill px-3 py-2" :class="selectedSite.is_active
+            <span
+              class="badge rounded-pill px-3 py-2"
+              :class="selectedSite.is_active
                 ? 'bg-success-subtle text-success'
-                : 'bg-secondary-subtle text-muted'
-              ">
+                : 'bg-secondary-subtle text-muted'"
+            >
               {{ selectedSite.is_active ? "Đang hoạt động" : "Tạm ngưng" }}
             </span>
           </div>
 
           <div class="mt-3 rounded overflow-hidden shadow-sm">
-            <iframe :src="mapEmbedUrl(selectedSite)" width="100%" height="220" style="border: 0"
-              loading="lazy"></iframe>
+            <iframe
+              :src="mapEmbedUrl(selectedSite)"
+              width="100%"
+              height="220"
+              style="border: 0"
+              loading="lazy"
+            ></iframe>
           </div>
 
           <div class="d-flex gap-2 mt-3">
@@ -137,8 +142,11 @@
               của bạn
             </h5>
 
-            <button class="btn btn-sm btn-outline-secondary" @click="loadMyAppointments"
-              :disabled="loadingAppointments">
+            <button
+              class="btn btn-sm btn-outline-secondary"
+              @click="loadMyAppointments"
+              :disabled="loadingAppointments"
+            >
               <span v-if="loadingAppointments" class="spinner-border spinner-border-sm me-1"></span>
               Tải lại
             </button>
@@ -162,9 +170,9 @@
               <tbody>
                 <tr v-for="a in myAppointments" :key="a.id">
                   <td>
-                    <span class="badge bg-light text-dark border">{{
-                      a.appointment_code
-                      }}</span>
+                    <span class="badge bg-light text-dark border">
+                      {{ a.appointment_code }}
+                    </span>
                   </td>
                   <td>{{ formatDate(a.scheduled_at) }}</td>
                   <td>{{ a.donation_site?.name }}</td>
@@ -179,27 +187,32 @@
                     }">
                       {{
                         a.status === "REQUESTED"
-                        ? "Chờ duyệt"
-                        :a.status === "APPROVED"
-                        ?"Đã duyệt"
-                        :a.status === "REJECTED"
-                        ?"Từ chối"
-                        :a.status === "CANCELLED"
-                        ?"Đã hủy"
-                        :a.status === "BOOKED"
-                        ?"Đã đặt"
-                        :a.status
-                        ?"Hoàn thành"
-                        :a.status === "COMPLETED"
+                          ? "Chờ duyệt"
+                          : a.status === "APPROVED"
+                          ? "Đã duyệt"
+                          : a.status === "REJECTED"
+                          ? "Từ chối"
+                          : a.status === "CANCELLED"
+                          ? "Đã hủy"
+                          : a.status === "BOOKED"
+                          ? "Đã đặt"
+                          : a.status === "COMPLETED"
+                          ? "Hoàn thành"
+                          : a.status
                       }}
                     </span>
                   </td>
                   <td class="text-end">
-                    <button v-if="
-                      ['REQUESTED', 'APPROVED', 'BOOKED'].includes(a.status)
-                    " class="btn btn-sm btn-outline-danger" @click="cancelAppointment(a)"
-                      :disabled="submittingCancelId === a.id">
-                      <span v-if="submittingCancelId === a.id" class="spinner-border spinner-border-sm me-1"></span>
+                    <button
+                      v-if="['REQUESTED', 'APPROVED', 'BOOKED'].includes(a.status)"
+                      class="btn btn-sm btn-outline-danger"
+                      @click="cancelAppointment(a)"
+                      :disabled="submittingCancelId === a.id"
+                    >
+                      <span
+                        v-if="submittingCancelId === a.id"
+                        class="spinner-border spinner-border-sm me-1"
+                      ></span>
                       Huỷ
                     </button>
                   </td>
@@ -249,10 +262,9 @@ export default {
     },
     minDate() {
       const d = new Date();
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
-        2,
-        "0"
-      )}-${String(d.getDate()).padStart(2, "0")}`;
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+        d.getDate()
+      ).padStart(2, "0")}`;
     },
   },
 
@@ -286,6 +298,23 @@ export default {
 
     clearSelectedSite() {
       this.form.donation_site_id = "";
+      this.$router.replace({
+        path: this.$route.path,
+        query: {},
+      });
+    },
+
+    applyPrefillDonationSite() {
+      const querySiteId = this.$route.query.donation_site_id;
+      if (!querySiteId) return;
+
+      const found = this.donation_sites.find(
+        (site) => String(site.id) === String(querySiteId)
+      );
+
+      if (found) {
+        this.form.donation_site_id = String(found.id);
+      }
     },
 
     loadProfile() {
@@ -296,16 +325,13 @@ export default {
           if (!res.data.status) return;
           const u = res.data.data || {};
           if (!this.form.full_name) this.form.full_name = u.full_name;
-          if (
-            !this.form.blood_group &&
-            this.bloodGroups.includes(u.blood_group)
-          ) {
+          if (!this.form.blood_group && this.bloodGroups.includes(u.blood_group)) {
             this.form.blood_group = u.blood_group;
           }
         })
         .catch((err) => {
           const message = err.response?.data?.message || "Lỗi tải thông tin";
-          this.$toast.error(message);
+          this.$toast?.error?.(message);
         })
         .finally(() => (this.loadingProfile = false));
     },
@@ -314,26 +340,41 @@ export default {
       baseRequestClient
         .get("/donor/donation-sites")
         .then((res) => {
-          if (res.data.status) this.donation_sites = res.data.data || [];
+          if (res.data.status) {
+            this.donation_sites = res.data.data || [];
+            this.applyPrefillDonationSite();
+          }
         })
         .catch((err) => {
-          const message = err.response?.data?.message || "Lỗi tải danh sách địa điểm";
-          this.$toast.error(message);
+          const message =
+            err.response?.data?.message || "Lỗi tải danh sách địa điểm";
+          this.$toast?.error?.(message);
         });
     },
 
     buildScheduledAt(dateStr, slot) {
       if (!dateStr || !slot) return null;
-      const h = slot.split("-")[0].trim().split(":")[0];
-      const pad = (n) => (n < 10 ? "0" + n : n);
-      return `${dateStr} ${pad(h)}:00:00`;
+      const left = slot.split("-")[0].trim();
+      const [hour, minute] = left.split(":");
+      const hh = String(hour || "7").padStart(2, "0");
+      const mm = String(minute || "0").padStart(2, "0");
+      return `${dateStr} ${hh}:${mm}:00`;
     },
 
     submitBooking() {
-      const scheduled_at = this.buildScheduledAt(
-        this.form.date,
-        this.form.time_slot
-      );
+      if (
+        !this.form.full_name ||
+        !this.form.blood_group ||
+        !this.form.donation_site_id ||
+        !this.form.date ||
+        !this.form.time_slot ||
+        !this.form.volume
+      ) {
+        this.$toast?.error?.("Vui lòng điền đầy đủ thông tin bắt buộc.");
+        return;
+      }
+
+      const scheduled_at = this.buildScheduledAt(this.form.date, this.form.time_slot);
 
       const payload = {
         donation_site_id: Number(this.form.donation_site_id),
@@ -349,16 +390,16 @@ export default {
         .post("/donor/donation-appointments", payload)
         .then((res) => {
           if (res.data.status) {
-            this.$toast.success(res.data.message);
+            this.$toast?.success?.(res.data.message || "Đăng ký thành công!");
             this.resetForm();
             this.loadMyAppointments();
           } else {
-            this.$toast.error(res.data.message);
+            this.$toast?.error?.(res.data.message || "Đăng ký thất bại!");
           }
         })
         .catch((err) => {
           const message = err.response?.data?.message || "Đã có lỗi xảy ra";
-          this.$toast.error(message);
+          this.$toast?.error?.(message);
         })
         .finally(() => (this.submitting = false));
     },
@@ -369,6 +410,10 @@ export default {
       this.form.time_slot = "";
       this.form.volume = "";
       this.form.note = "";
+      this.$router.replace({
+        path: this.$route.path,
+        query: {},
+      });
     },
 
     loadMyAppointments() {
@@ -380,7 +425,7 @@ export default {
         })
         .catch((err) => {
           const message = err.response?.data?.message || "Lỗi tải lịch sử";
-          this.$toast.error(message);
+          this.$toast?.error?.(message);
         })
         .finally(() => (this.loadingAppointments = false));
     },
@@ -391,15 +436,15 @@ export default {
         .post(`/donor/donation-appointments/${a.id}/cancel`)
         .then((res) => {
           if (res.data.status) {
-            this.$toast.success(res.data.message);
+            this.$toast?.success?.(res.data.message);
             this.loadMyAppointments();
           } else {
-            this.$toast.error(res.data.message);
+            this.$toast?.error?.(res.data.message);
           }
         })
         .catch((err) => {
           const message = err.response?.data?.message || "Lỗi hủy lịch";
-          this.$toast.error(message);
+          this.$toast?.error?.(message);
         })
         .finally(() => (this.submittingCancelId = null));
     },

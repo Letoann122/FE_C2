@@ -1,7 +1,7 @@
 <template>
   <div class="container-fluid bg-body-tertiary py-5">
     <div class="row justify-content-center g-4">
-      <!-- Sidebar -->
+      <!-- Sidebar: GIỮ NGUYÊN -->
       <div class="col-md-3 col-lg-2">
         <div class="card border-0 shadow-sm rounded-4 p-2">
           <div class="list-group list-group-flush">
@@ -9,10 +9,12 @@
               active-class="active text-danger fw-bold">
               <i class="bi bi-person-fill me-2"></i> Hồ sơ cá nhân
             </router-link>
+
             <router-link to="/blood-donation-history" class="list-group-item list-group-item-action rounded-3 my-1"
               active-class="active text-danger fw-bold">
               <i class="bi bi-arrow-counterclockwise me-2"></i> Lịch sử hiến máu
             </router-link>
+
             <router-link to="/account-security" class="list-group-item list-group-item-action rounded-3 my-1"
               active-class="active text-danger fw-bold">
               <i class="bi bi-shield-lock-fill me-2"></i> Bảo mật tài khoản
@@ -21,112 +23,158 @@
         </div>
       </div>
 
-      <!-- Content -->
+      <!-- Content: CHỈ THAY PHẦN NÀY -->
       <div class="col-md-9 col-lg-9">
         <div class="card shadow-sm border-0 rounded-4 bg-white p-4">
-          <h4 class="fw-bold mb-1">
-            <i class="bi bi-arrow-counterclockwise me-2 text-danger"></i>
-            Lịch sử hiến máu
-          </h4>
-          <p class="text-muted mb-3">Theo dõi toàn bộ hành trình hiến máu của bạn</p>
-          <hr class="border border-1 border-light-subtle my-3" />
+          <!-- Header -->
+          <div class="mb-4">
+            <h4 class="fw-bold mb-1">
+              Lịch sử Hiến máu
+            </h4>
+          </div>
 
           <!-- Stats -->
           <div class="row g-3 mb-4">
-            <div v-for="(item, index) in stats" :key="index" class="col-md-4">
-              <div class="card border-0 shadow-sm rounded-4 py-3 px-4 d-flex align-items-center">
-                <div :class="[
-                  'icon-box rounded-circle d-flex align-items-center justify-content-center me-3',
-                  item.bg,
-                ]" style="width: 45px; height: 45px">
-                  <i :class="item.icon" class="fs-5"></i>
+            <div class="col-md-6">
+              <div class="card border-0 shadow-sm rounded-4 stat-card h-100">
+                <div class="card-body p-4 d-flex justify-content-between align-items-start">
+                  <div>
+                    <div class="small text-muted mb-2">Tổng số lần hiến</div>
+                    <div class="display-6 fw-bold">{{ overview.total_count }}</div>
+                  </div>
+
+                  <div class="stat-icon bg-danger-subtle text-danger">
+                    <i class="bi bi-person-heart"></i>
+                  </div>
                 </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="card border-0 shadow-sm rounded-4 stat-card h-100">
+                <div class="card-body p-4 d-flex justify-content-between align-items-start">
+                  <div>
+                    <div class="small text-muted mb-2">Tổng lượng máu</div>
+                    <div class="display-6 fw-bold">
+                      {{ Number(overview.total_volume_ml || 0).toLocaleString("vi-VN") }}ml
+                    </div>
+                  </div>
+
+                  <div class="stat-icon bg-success-subtle text-success">
+                    <i class="bi bi-droplet-fill"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Eligibility -->
+          <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
                 <div>
-                  <p class="mb-1 text-muted small">{{ item.label }}</p>
-                  <h5 class="fw-bold mb-0">{{ item.value }}</h5>
+                  <h5 class="fw-bold mb-2">Tình trạng đủ điều kiện</h5>
+                  <div class="text-muted">
+                    <template v-if="eligibility.next_eligible_date">
+                      Lần hiến tiếp theo vào ngày:
+                      <strong>{{ formatDate(eligibility.next_eligible_date) }}</strong>
+                    </template>
+                    <template v-else>
+                      Bạn chưa có dữ liệu hiến máu trước đó
+                    </template>
+                  </div>
+                </div>
+
+                <div class="eligibility-badge" :class="eligibility.remaining_days > 0 ? 'warning' : 'success'">
+                  <i class="bi" :class="eligibility.remaining_days > 0 ? 'bi-hourglass-split' : 'bi-check-circle'"></i>
+                  <span>
+                    {{
+                      eligibility.remaining_days > 0
+                        ? `Còn ${eligibility.remaining_days} ngày nữa`
+                        : "Đủ điều kiện hiến lại"
+                    }}
+                  </span>
                 </div>
               </div>
-            </div>
-          </div>
 
-          <!-- Filters -->
-          <div class="card border-0 shadow-sm rounded-4 mb-4 p-3">
-            <div class="row g-2 align-items-center">
-              <div class="col-md-2">
-                <select class="form-select" v-model="filters.year" @change="fetchHistory(1)">
-                  <option value="">Tất cả năm</option>
-                  <option v-for="y in yearOptions" :key="y" :value="y">{{ y }}</option>
-                </select>
+              <div class="small text-muted mb-2">Tiến trình thời gian chờ</div>
+
+              <div class="progress eligibility-progress mb-2" role="progressbar">
+                <div class="progress-bar" :style="{ width: `${eligibility.progress_percent}%` }"></div>
               </div>
 
-              <div class="col-md-2">
-                <select class="form-select" v-model="filters.month" @change="fetchHistory(1)">
-                  <option value="">Tất cả tháng</option>
-                  <option v-for="m in 12" :key="m" :value="m">Tháng {{ m }}</option>
-                </select>
-              </div>
-
-              <div class="col-md-8">
-                <input type="text" class="form-control" placeholder="Tìm theo địa điểm / tên chiến dịch..."
-                  v-model="filters.q" @input="onSearchInput" />
+              <div class="d-flex justify-content-between small text-muted">
+                <span>Thời gian chờ tối thiểu giữa hai lần hiến máu là 90 ngày</span>
+                <strong>{{ eligibility.progress_percent }}%</strong>
               </div>
             </div>
           </div>
 
-          <!-- Table -->
-          <div class="card border-0 shadow-sm rounded-4">
-            <div class="table-responsive">
-              <table class="table align-middle mb-0">
-                <thead class="table-light">
+          <!-- History Table -->
+          <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="p-4 border-bottom">
+              <h5 class="fw-bold mb-0">Danh sách lịch sử</h5>
+            </div>
+
+            <div v-if="loading" class="p-4 text-center text-muted">
+              Đang tải dữ liệu...
+            </div>
+
+            <div v-else-if="donations.length === 0" class="p-4 text-center text-muted">
+              Chưa có dữ liệu lịch sử hiến máu.
+            </div>
+
+            <div v-else class="table-responsive">
+              <table class="table align-middle mb-0 history-table">
+                <thead>
                   <tr>
-                    <th><i class="bi bi-calendar3 me-2"></i>Ngày hiến</th>
-                    <th><i class="bi bi-geo-alt me-2"></i>Địa điểm</th>
-                    <th><i class="bi bi-droplet me-2"></i>Số lượng máu</th>
-                    <th><i class="bi bi-chat-square-text me-2"></i>Ghi chú</th>
+                    <th>Ngày hiến</th>
+                    <th>Địa điểm</th>
+                    <th>Lượng máu</th>
+                    <th>Trạng thái</th>
                   </tr>
                 </thead>
 
-                <tbody v-if="loading">
-                  <tr>
-                    <td colspan="4" class="text-center text-muted py-4">Đang tải dữ liệu...</td>
-                  </tr>
-                </tbody>
-
-                <tbody v-else>
-                  <tr v-if="donations.length === 0">
-                    <td colspan="4" class="text-center text-muted py-4">
-                      Chưa có dữ liệu lịch sử hiến máu.
-                    </td>
-                  </tr>
-
+                <tbody>
                   <tr v-for="item in donations" :key="item.id">
-                    <td>{{ formatDate(item.collected_at) }}</td>
-
                     <td>
-                      {{ buildLocation(item) }}
-                      <div v-if="item.is_campaign && item.campaign_title" class="small text-muted mt-1">
-                        <i class="bi bi-bullseye me-1"></i> Chiến dịch: {{ item.campaign_title }}
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="date-icon">
+                          <i class="bi bi-calendar-event-fill"></i>
+                        </div>
+                        <span class="fw-medium">{{ formatDate(item.collected_at) }}</span>
                       </div>
                     </td>
 
                     <td>
-                      <span class="badge bg-light text-danger fw-semibold px-3 py-2">
-                        {{ item.volume_ml }}ml
+                      <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-hospital text-secondary"></i>
+                        <span>{{ buildLocation(item) }}</span>
+                      </div>
+                    </td>
+
+                    <td>
+                      <span class="fw-semibold">{{ item.volume_ml }} ml</span>
+                    </td>
+
+                    <td>
+                      <span class="status-chip success">
+                        <span class="dot"></span>
+                        Thành công
                       </span>
                     </td>
-                    <td>{{ item.notes || "-" }}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
-            <div class="p-3 d-flex justify-content-between align-items-center text-muted small border-top">
-              <div>
+            <!-- Footer / Pagination -->
+            <div class="p-3 d-flex justify-content-between align-items-center border-top flex-wrap gap-2">
+              <div class="small text-muted">
                 Hiển thị {{ donations.length }} kết quả
                 <span v-if="meta.total_records">/ Tổng {{ meta.total_records }}</span>
               </div>
 
-              <!-- Pagination -->
               <nav v-if="meta.total_pages > 1">
                 <ul class="pagination pagination-sm mb-0">
                   <li class="page-item" :class="{ disabled: meta.page <= 1 }">
@@ -136,7 +184,9 @@
                   </li>
 
                   <li class="page-item" v-for="p in pageNumbers" :key="p" :class="{ active: p === meta.page }">
-                    <button class="page-link" @click="fetchHistory(p)">{{ p }}</button>
+                    <button class="page-link" @click="fetchHistory(p)">
+                      {{ p }}
+                    </button>
                   </li>
 
                   <li class="page-item" :class="{ disabled: meta.page >= meta.total_pages }">
@@ -149,7 +199,7 @@
               </nav>
             </div>
           </div>
-          <!-- /Table -->
+          <!-- /History Table -->
         </div>
       </div>
     </div>
@@ -160,46 +210,27 @@
 import baseRequestClient from "../../../core/baseRequestClient";
 
 export default {
-  name: "LichSuHienMau",
+  name: "BloodDonationHistoryPage",
+
   data() {
-    const now = new Date();
     return {
       loading: false,
-      searchTimer: null,
-
-      filters: { year: "", month: "", q: "" },
-
-      stats: [
-        {
-          label: "Tổng số lần hiến",
-          value: "0 lần",
-          icon: "bi bi-droplet-fill text-danger",
-          bg: "bg-light-danger",
-        },
-        {
-          label: "Tổng lượng máu",
-          value: "0ml",
-          icon: "bi bi-beaker-fill text-primary",
-          bg: "bg-light-primary",
-        },
-        {
-          label: "Lần hiến gần nhất",
-          value: "-",
-          icon: "bi bi-calendar-check text-success",
-          bg: "bg-light-success",
-        },
-      ],
-
       donations: [],
-
+      overview: {
+        total_count: 0,
+        total_volume_ml: 0,
+      },
+      eligibility: {
+        next_eligible_date: null,
+        remaining_days: 0,
+        progress_percent: 0,
+      },
       meta: {
         page: 1,
         limit: 10,
         total_records: 0,
         total_pages: 1,
       },
-
-      yearOptions: Array.from({ length: 6 }, (_, i) => now.getFullYear() - i),
     };
   },
 
@@ -222,69 +253,47 @@ export default {
   },
 
   methods: {
-    buildParams(page = 1) {
-      const params = { page, limit: this.meta.limit };
-      if (this.filters.year) params.year = this.filters.year;
-      if (this.filters.month) params.month = this.filters.month;
-      if (this.filters.q && this.filters.q.trim()) params.q = this.filters.q.trim();
-      return params;
-    },
-
     async fetchHistory(page = 1) {
-      try {
-        this.loading = true;
+      this.loading = true;
 
+      try {
         const res = await baseRequestClient.get("/donor/donation-history", {
-          params: this.buildParams(page),
+          params: {
+            page,
+            limit: this.meta.limit,
+          },
         });
 
-        if (res.data.status) {
+        if (res.data?.status) {
           this.donations = res.data.data || [];
+
+          this.overview = {
+            total_count: res.data.overview?.total_count || 0,
+            total_volume_ml: res.data.overview?.total_volume_ml || 0,
+          };
+
+          this.eligibility = {
+            next_eligible_date: res.data.eligibility?.next_eligible_date || null,
+            remaining_days: res.data.eligibility?.remaining_days || 0,
+            progress_percent: res.data.eligibility?.progress_percent || 0,
+          };
+
           this.meta = {
             page: res.data.meta?.page || page,
-            limit: res.data.meta?.limit || this.meta.limit,
+            limit: res.data.meta?.limit || 10,
             total_records: res.data.meta?.total_records || 0,
             total_pages: res.data.meta?.total_pages || 1,
           };
-
-          const s = res.data.stats || {};
-          const totalCount = s.total_count || 0;
-          const totalVolume = s.total_volume_ml || 0;
-          const lastAt = s.last_donation_at || null;
-
-          this.stats = [
-            {
-              label: "Tổng số lần hiến",
-              value: `${totalCount} lần`,
-              icon: "bi bi-droplet-fill text-danger",
-              bg: "bg-light-danger",
-            },
-            {
-              label: "Tổng lượng máu",
-              value: `${Number(totalVolume).toLocaleString("vi-VN")}ml`,
-              icon: "bi bi-beaker-fill text-primary",
-              bg: "bg-light-primary",
-            },
-            {
-              label: "Lần hiến gần nhất",
-              value: lastAt ? this.formatDate(lastAt) : "-",
-              icon: "bi bi-calendar-check text-success",
-              bg: "bg-light-success",
-            },
-          ];
         } else {
-          this.$toast?.error(res.data.message || "Không thể tải lịch sử hiến máu!");
+          this.$toast?.error?.(res.data?.message || "Không thể tải lịch sử hiến máu!");
         }
       } catch (err) {
-        this.$toast?.error(err.response?.data?.message || "Không thể tải lịch sử hiến máu!");
+        this.$toast?.error?.(
+          err.response?.data?.message || "Không thể tải lịch sử hiến máu!"
+        );
       } finally {
         this.loading = false;
       }
-    },
-
-    onSearchInput() {
-      clearTimeout(this.searchTimer);
-      this.searchTimer = setTimeout(() => this.fetchHistory(1), 400);
     },
 
     formatDate(dateVal) {
@@ -293,13 +302,11 @@ export default {
       return d.toLocaleDateString("vi-VN");
     },
 
-    // ✅ NEW: ưu tiên location_display từ BE (đã xử lý campaign location)
     buildLocation(item) {
       if (item.location_display && String(item.location_display).trim()) {
         return String(item.location_display).trim();
       }
 
-      // fallback dữ liệu cũ
       const name = item.donation_site_name || item.hospital_name || "";
       const addr = item.donation_site_address || "";
       return [name, addr].filter(Boolean).join(" - ");
@@ -314,28 +321,108 @@ export default {
   color: #dc3545 !important;
 }
 
-.bg-light-danger {
-  background-color: rgba(255, 99, 132, 0.1);
+.donation-history-page .card {
+  border-radius: 18px;
 }
 
-.bg-light-primary {
-  background-color: rgba(54, 162, 235, 0.1);
+.stat-card {
+  min-height: 120px;
 }
 
-.bg-light-success {
-  background-color: rgba(75, 192, 192, 0.1);
+.stat-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
 }
 
-.table th {
-  font-weight: 600;
-  color: #333;
-}
-
-.table td {
-  color: #444;
-}
-
-.badge {
+.eligibility-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
   border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.eligibility-badge.warning {
+  background: #fff7e6;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.eligibility-badge.success {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.eligibility-progress {
+  height: 8px;
+  background: #eceff3;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.eligibility-progress .progress-bar {
+  background: #d6a94a;
+  border-radius: 999px;
+}
+
+.history-table thead th {
+  background: #f8f9fb;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 600;
+  border-bottom: none;
+  padding: 16px 20px;
+}
+
+.history-table tbody td {
+  padding: 18px 20px;
+  border-top: 1px solid #f1f3f5;
+  vertical-align: middle;
+}
+
+.date-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #fee2e2;
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.status-chip.success {
+  background: #ecfdf5;
+  color: #10b981;
+}
+
+.status-chip .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.page-link {
+  border-radius: 8px;
 }
 </style>
