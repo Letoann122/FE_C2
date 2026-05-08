@@ -8,18 +8,12 @@
     <div v-else-if="appointment">
       <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-body p-4">
-          <div
-            class="d-flex justify-content-between align-items-start flex-wrap gap-3"
-          >
+          <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
               <h4 class="fw-bold mb-1">
                 <i class="bi bi-heart-pulse text-danger me-2"></i>
                 Quy trình hiến máu
               </h4>
-
-              <p class="text-muted mb-0">
-                Workflow: CHECKED_IN → SCREENING → DONATING → COMPLETED
-              </p>
             </div>
 
             <span class="badge fs-6" :class="statusClass(appointment.status)">
@@ -129,15 +123,8 @@
                   Người hiến đã check-in và đang chờ sàng lọc.
                 </div>
 
-                <button
-                  class="btn btn-danger"
-                  :disabled="processing"
-                  @click="startScreening"
-                >
-                  <span
-                    v-if="processing"
-                    class="spinner-border spinner-border-sm me-2"
-                  ></span>
+                <button class="btn btn-danger" :disabled="processing" @click="startScreening">
+                  <span v-if="processing" class="spinner-border spinner-border-sm me-2"></span>
 
                   <i v-else class="bi bi-play-circle me-2"></i>
 
@@ -155,71 +142,40 @@
                 <div class="row g-3">
                   <div class="col-md-6">
                     <label class="form-label fw-semibold">Huyết áp</label>
-                    <input
-                      v-model="screening.blood_pressure"
-                      class="form-control"
-                      placeholder="120/80"
-                    />
+                    <input v-model="screening.blood_pressure" class="form-control" placeholder="120/80" />
                   </div>
 
                   <div class="col-md-6">
                     <label class="form-label fw-semibold">Nhịp tim</label>
-                    <input
-                      v-model="screening.heart_rate"
-                      class="form-control"
-                      placeholder="75"
-                    />
+                    <input v-model="screening.heart_rate" class="form-control" placeholder="75" />
                   </div>
 
                   <div class="col-md-6">
                     <label class="form-label fw-semibold">Hemoglobin</label>
-                    <input
-                      v-model="screening.hemoglobin"
-                      class="form-control"
-                      placeholder="13.5"
-                    />
+                    <input v-model="screening.hemoglobin" class="form-control" placeholder="13.5" />
                   </div>
 
                   <div class="col-md-6">
                     <label class="form-label fw-semibold">Cân nặng</label>
-                    <input
-                      v-model="screening.weight"
-                      class="form-control"
-                      placeholder="60"
-                    />
+                    <input v-model="screening.weight" class="form-control" placeholder="60" />
                   </div>
 
                   <div class="col-12">
                     <label class="form-label fw-semibold">Ghi chú</label>
-                    <textarea
-                      v-model="screening.screening_note"
-                      class="form-control"
-                      rows="3"
-                    ></textarea>
+                    <textarea v-model="screening.screening_note" class="form-control" rows="3"></textarea>
                   </div>
                 </div>
 
                 <div class="d-flex gap-2 mt-4 flex-wrap">
-                  <button
-                    class="btn btn-danger"
-                    :disabled="processing"
-                    @click="startDonation"
-                  >
-                    <span
-                      v-if="processing"
-                      class="spinner-border spinner-border-sm me-2"
-                    ></span>
+                  <button class="btn btn-danger" :disabled="processing" @click="startDonation">
+                    <span v-if="processing" class="spinner-border spinner-border-sm me-2"></span>
 
                     <i v-else class="bi bi-check-circle me-2"></i>
 
                     Đủ điều kiện hiến máu
                   </button>
 
-                  <button
-                    class="btn btn-outline-secondary"
-                    :disabled="processing"
-                    @click="failScreening"
-                  >
+                  <button class="btn btn-outline-secondary" :disabled="processing" @click="failScreening">
                     Không đạt sàng lọc
                   </button>
                 </div>
@@ -233,9 +189,7 @@
 
                 <div class="row g-3">
                   <div class="col-md-6">
-                    <label class="form-label fw-semibold"
-                      >Lượng máu thực tế (ml)</label
-                    >
+                    <label class="form-label fw-semibold">Lượng máu thực tế (ml)</label>
 
                     <select v-model="donation.volume_ml" class="form-select">
                       <option value="250">250ml</option>
@@ -247,32 +201,18 @@
                   <div class="col-md-6">
                     <label class="form-label fw-semibold">Nhóm máu</label>
 
-                    <input
-                      v-model="donation.blood_group"
-                      class="form-control"
-                    />
+                    <input v-model="donation.blood_group" class="form-control" />
                   </div>
 
                   <div class="col-12">
                     <label class="form-label fw-semibold">Ghi chú</label>
 
-                    <textarea
-                      v-model="donation.notes"
-                      class="form-control"
-                      rows="3"
-                    ></textarea>
+                    <textarea v-model="donation.notes" class="form-control" rows="3"></textarea>
                   </div>
                 </div>
 
-                <button
-                  class="btn btn-danger mt-4"
-                  :disabled="processing"
-                  @click="completeDonation"
-                >
-                  <span
-                    v-if="processing"
-                    class="spinner-border spinner-border-sm me-2"
-                  ></span>
+                <button class="btn btn-danger mt-4" :disabled="processing" @click="completeDonation">
+                  <span v-if="processing" class="spinner-border spinner-border-sm me-2"></span>
 
                   <i v-else class="bi bi-heart-fill me-2"></i>
 
@@ -286,10 +226,7 @@
                   Quy trình hiến máu đã hoàn tất và máu đã được nhập kho.
                 </div>
 
-                <div
-                  v-if="appointment.donation"
-                  class="border rounded-4 p-3 bg-light"
-                >
+                <div v-if="appointment.donation" class="border rounded-4 p-3 bg-light">
                   <div class="row g-3">
                     <div class="col-md-6">
                       <div class="small text-muted">Donation ID</div>
@@ -333,27 +270,18 @@
               </div>
 
               <!-- notes -->
-              <div
-                v-if="appointment.notes"
-                class="border rounded-4 p-3 bg-light mt-4"
-              >
+              <div v-if="appointment.notes" class="border rounded-4 p-3 bg-light mt-4">
                 <div class="fw-bold mb-2">Ghi chú hệ thống</div>
 
                 <pre class="mb-0 note-pre">{{ appointment.notes }}</pre>
               </div>
 
-              <div
-                v-if="errorMessage"
-                class="alert alert-danger rounded-4 mt-4 mb-0"
-              >
+              <div v-if="errorMessage" class="alert alert-danger rounded-4 mt-4 mb-0">
                 <i class="bi bi-exclamation-triangle-fill me-1"></i>
                 {{ errorMessage }}
               </div>
 
-              <div
-                v-if="successMessage"
-                class="alert alert-success rounded-4 mt-4 mb-0"
-              >
+              <div v-if="successMessage" class="alert alert-success rounded-4 mt-4 mb-0">
                 <i class="bi bi-check-circle-fill me-1"></i>
                 {{ successMessage }}
               </div>
