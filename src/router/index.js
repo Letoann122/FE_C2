@@ -246,15 +246,24 @@ const routes = [
     beforeEnter: checkDoctor,
   },
   {
-  path: "/Hospital/donation-process",
-  component: () =>
-    import("../components/Hospital/DonationProcess/index.vue"),
-  meta: {
-    layout: "Hospital",
-    title: "Donation Process",
+    path: "/Hospital/donation-process",
+    component: () =>
+      import("../components/Hospital/DonationProcess/index.vue"),
+    meta: {
+      layout: "Hospital",
+      title: "Donation Process",
+    },
+    beforeEnter: checkDoctor,
   },
-  beforeEnter: checkDoctor,
-},
+  {
+    path: "/Hospital/blood-testing",
+    component: () => import("../components/Hospital/BloodTesting/index.vue"),
+    meta: {
+      layout: "Hospital",
+      title: "Kiểm định túi máu",
+    },
+    beforeEnter: checkDoctor,
+  },
   // ===== DONOR =====
   {
     path: "/my-appointments",

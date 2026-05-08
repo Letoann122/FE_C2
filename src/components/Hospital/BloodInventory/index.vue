@@ -46,6 +46,11 @@
               </div>
             </form>
 
+            <div class="alert alert-info small mt-3 mb-0">
+              <i class="bi bi-info-circle me-1"></i>
+              Lô máu nhập thủ công sẽ được ghi nhận là <b>Có thể sử dụng</b>.
+              Máu từ quy trình hiến máu sẽ vào trạng thái <b>Đang kiểm định</b>.
+            </div>
           </div>
         </div>
       </div>
@@ -55,6 +60,9 @@
           <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
             <div>
               <h5 class="mb-0 fw-bold">Tổng quan tồn kho máu</h5>
+              <div class="text-muted small">
+                Chỉ túi máu <b>Có thể sử dụng</b> mới được tính vào tồn kho khả dụng.
+              </div>
             </div>
           </div>
 
@@ -64,13 +72,13 @@
                 <thead class="table-light">
                   <tr>
                     <th>Nhóm máu</th>
-                    <th>Tổng túi</th>
-                    <th>Hạn sớm nhất</th>
-                    <th>Hạn muộn nhất</th>
-                    <th>Không đạt</th>
+                    <th>Khả dụng</th>
+                    <th>Đang kiểm định</th>
+                    <th>Đã loại bỏ</th>
                     <th>Sắp hết hạn</th>
                     <th>Hết hạn</th>
-                    <th>Tình trạng</th>
+                    <th>Hạn sớm nhất</th>
+                    <th>Tình trạng kho</th>
                     <th class="text-end">Thao tác</th>
                   </tr>
                 </thead>
@@ -85,24 +93,16 @@
 
                   <tr v-else v-for="blood in aggregated" :key="blood.type">
                     <td class="fw-bold text-danger">{{ blood.type }}</td>
-                    <td>{{ blood.total_units }}</td>
-                    <td>{{ formatDateCell(blood.earliest_expiry) }}</td>
-                    <td>{{ formatDateCell(blood.latest_expiry) }}</td>
-                    <td>{{ blood.failed_units }}</td>
+                    <td class="fw-bold">{{ blood.available_units }}</td>
+                    <td>{{ blood.testing_units }}</td>
+                    <td>{{ blood.discarded_units }}</td>
                     <td>{{ blood.expiring_count }}</td>
-                    <td>{{ blood.expired_count }}</td>
+                    <td>{{ blood.expired_units }}</td>
+                    <td>{{ formatDateCell(blood.earliest_expiry) }}</td>
 
                     <td>
-                      <span
-                        class="badge rounded-pill"
-                        :class="{
-                          'bg-success': blood.status === 'full',
-                          'bg-warning text-dark': blood.status === 'expiring',
-                          'bg-danger': blood.status === 'critical',
-                          'bg-secondary': blood.status === 'low'
-                        }"
-                      >
-                        {{ translateStatus(blood.status) }}
+                      <span class="badge rounded-pill" :class="inventoryStatusClass(blood.inventory_status)">
+                        {{ inventoryStatusText(blood.inventory_status) }}
                       </span>
                     </td>
 
@@ -116,7 +116,7 @@
 
                       <button
                         class="btn btn-sm btn-outline-dark"
-                        :disabled="blood.total_units <= 0"
+                        :disabled="blood.available_units <= 0"
                         @click="openExportModal(blood)"
                       >
                         Xuất
@@ -151,7 +151,7 @@
         <div class="modal-body">
           <div class="alert alert-warning py-2 small mb-3">
             <i class="bi bi-exclamation-triangle me-1"></i>
-            Hệ thống sẽ xuất theo <b>lô có hạn sớm nhất</b> trước.
+            Hệ thống chỉ xuất các túi máu <b>có thể sử dụng</b> và ưu tiên lô có hạn sớm nhất.
           </div>
 
           <div class="row g-3">
@@ -166,7 +166,7 @@
                 :disabled="loadingExport"
               />
               <div class="text-muted small mt-1">
-                Tồn hiện tại: <b>{{ exportModal.maxUnits }}</b> túi
+                Tồn khả dụng hiện tại: <b>{{ exportModal.maxUnits }}</b> túi
               </div>
             </div>
 
@@ -245,13 +245,17 @@ export default {
       this.bloodTypes.forEach((t) => {
         groups[t.name] = {
           type: t.name,
-          total_units: 0,
-          failed_units: 0,        // 👈 số túi không đạt
+
+          available_units: 0,
+          testing_units: 0,
+          discarded_units: 0,
+          expired_units: 0,
+
           earliest_expiry: null,
           latest_expiry: null,
           expiring_count: 0,
-          expired_count: 0,
-          status: "full",
+
+          inventory_status: "critical",
         };
       });
 
@@ -262,32 +266,54 @@ export default {
         const g = groups[type];
         const units = Number(batch.units || 0);
         const exp = this.toDate0(batch.expiry_date);
+        const status = batch.status;
 
-        if (units > 0) g.total_units += units;
+        if (status === "available") {
+          g.available_units += units;
 
-        // 👉 nếu batch có quality_note (VD: "Không đạt sàng lọc") thì cộng vào failed_units
-        if (batch.quality_note && units > 0) {
-          g.failed_units += units;
+          if (units > 0 && exp) {
+            if (!g.earliest_expiry || exp < this.toDate0(g.earliest_expiry)) {
+              g.earliest_expiry = batch.expiry_date;
+            }
+
+            if (!g.latest_expiry || exp > this.toDate0(g.latest_expiry)) {
+              g.latest_expiry = batch.expiry_date;
+            }
+
+            if (exp < today) {
+              g.expired_units += units;
+            } else {
+              const days = (exp - today) / (1000 * 3600 * 24);
+              if (days <= 3) g.expiring_count += 1;
+            }
+          }
         }
 
-        if (units > 0 && exp) {
-          if (!g.earliest_expiry || exp < this.toDate0(g.earliest_expiry)) g.earliest_expiry = batch.expiry_date;
-          if (!g.latest_expiry || exp > this.toDate0(g.latest_expiry)) g.latest_expiry = batch.expiry_date;
+        if (status === "testing") {
+          g.testing_units += units;
+        }
 
-          if (exp < today) g.expired_count += 1;
-          else {
-            const days = (exp - today) / (1000 * 3600 * 24);
-            if (days <= 3) g.expiring_count += 1;
-          }
+        if (status === "discarded") {
+          g.discarded_units += units;
+        }
+
+        if (status === "expired") {
+          g.expired_units += units;
         }
       });
 
       Object.values(groups).forEach((g) => {
-        if (g.total_units <= 0) g.status = "critical";
-        else if (g.expired_count > 0) g.status = "critical";
-        else if (g.expiring_count > 0) g.status = "expiring";
-        else if (g.total_units < 5) g.status = "low";
-        else g.status = "full";
+        if (g.available_units <= 0) {
+          g.inventory_status = "critical";
+        } else if (g.expired_units > 0) {
+          g.inventory_status = "critical";
+        } else if (g.expiring_count > 0) {
+          g.inventory_status = "expiring";
+        } else if (g.available_units < 5) {
+          g.inventory_status = "low";
+        } else {
+          g.inventory_status = "good";
+        }
       });
 
       return Object.values(groups);
@@ -329,7 +355,7 @@ export default {
       this.loadingCreate = true;
       try {
         const res = await baseRequestDoctor.post("/doctor/blood-inventory", this.form);
-        
+
         if (res.data.status) {
           this.$toast?.success(res.data.message || "Thêm lô máu thành công!");
           await this.loadData();
@@ -358,7 +384,7 @@ export default {
         typeLabel: row.type,
         blood_type_id: id,
         units: 1,
-        maxUnits: row.total_units || 0,
+        maxUnits: row.available_units || 0,
         reason: "",
       };
     },
@@ -369,9 +395,17 @@ export default {
     },
 
     async submitExport() {
-      if (!this.exportModal.blood_type_id) return this.$toast?.error("Thiếu nhóm máu để xuất!");
-      if (!this.exportModal.units || this.exportModal.units <= 0) return this.$toast?.error("Số lượng xuất phải lớn hơn 0!");
-      if (this.exportModal.units > this.exportModal.maxUnits) return this.$toast?.error("Số lượng xuất vượt quá tồn hiện tại!");
+      if (!this.exportModal.blood_type_id) {
+        return this.$toast?.error("Thiếu nhóm máu để xuất!");
+      }
+
+      if (!this.exportModal.units || this.exportModal.units <= 0) {
+        return this.$toast?.error("Số lượng xuất phải lớn hơn 0!");
+      }
+
+      if (this.exportModal.units > this.exportModal.maxUnits) {
+        return this.$toast?.error("Số lượng xuất vượt quá tồn khả dụng hiện tại!");
+      }
 
       this.loadingExport = true;
       try {
@@ -399,15 +433,19 @@ export default {
 
     toDate0(input) {
       if (!input) return null;
+
       const s = typeof input === "string" ? input : null;
+
       if (s && /^\d{4}-\d{2}-\d{2}$/.test(s)) {
         const [y, m, d] = s.split("-").map(Number);
         const dt = new Date(y, m - 1, d);
         dt.setHours(0, 0, 0, 0);
         return dt;
       }
+
       const dt = new Date(input);
       if (Number.isNaN(dt.getTime())) return null;
+
       dt.setHours(0, 0, 0, 0);
       return dt;
     },
@@ -418,13 +456,22 @@ export default {
       return dt ? dt.toLocaleDateString("vi-VN") : "-";
     },
 
-    translateStatus(status) {
+    inventoryStatusText(status) {
       return {
-        full: "Đầy đủ",
+        good: "Ổn định",
         expiring: "Sắp hết hạn",
-        critical: "Cần nhập",
+        critical: "Cần bổ sung",
         low: "Ít máu",
       }[status] || "Không xác định";
+    },
+
+    inventoryStatusClass(status) {
+      return {
+        good: "bg-success",
+        expiring: "bg-warning text-dark",
+        critical: "bg-danger",
+        low: "bg-secondary",
+      }[status] || "bg-light text-dark border";
     },
   },
 };
