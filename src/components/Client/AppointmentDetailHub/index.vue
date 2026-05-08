@@ -367,32 +367,37 @@ export default {
       socketJoined: false,
 
       steps: [
-        {
-          key: "APPROVED",
-          title: "Xác nhận lịch",
-          icon: "bi bi-calendar-check",
-        },
-        {
-          key: "CHECKED_IN",
-          title: "Check-in",
-          icon: "bi bi-qr-code-scan",
-        },
-        {
-          key: "SCREENING",
-          title: "Sàng lọc",
-          icon: "bi bi-heart-pulse",
-        },
-        {
-          key: "DONATING",
-          title: "Hiến máu",
-          icon: "bi bi-droplet-fill",
-        },
-        {
-          key: "COMPLETED",
-          title: "Hoàn tất",
-          icon: "bi bi-stars",
-        },
-      ],
+  {
+    key: "REQUESTED",
+    title: "Chờ duyệt",
+    icon: "bi bi-hourglass-split",
+  },
+  {
+    key: "APPROVED",
+    title: "Xác nhận lịch",
+    icon: "bi bi-calendar-check",
+  },
+  {
+    key: "CHECKED_IN",
+    title: "Check-in",
+    icon: "bi bi-qr-code-scan",
+  },
+  {
+    key: "SCREENING",
+    title: "Sàng lọc",
+    icon: "bi bi-heart-pulse",
+  },
+  {
+    key: "DONATING",
+    title: "Hiến máu",
+    icon: "bi bi-droplet-fill",
+  },
+  {
+    key: "COMPLETED",
+    title: "Hoàn tất",
+    icon: "bi bi-stars",
+  },
+],
     };
   },
 
@@ -687,17 +692,18 @@ export default {
     },
 
     statusIndex(status) {
-      const map = {
-        APPROVED: 0,
-        BOOKED: 0,
-        CHECKED_IN: 1,
-        SCREENING: 2,
-        DONATING: 3,
-        COMPLETED: 4,
-      };
+  const map = {
+    REQUESTED: 0,
+    APPROVED: 1,
+    BOOKED: 1,
+    CHECKED_IN: 2,
+    SCREENING: 3,
+    DONATING: 4,
+    COMPLETED: 5,
+  };
 
-      return map[status] ?? -1;
-    },
+  return map[status] ?? -1;
+},
 
     stepClass(stepKey) {
       const currentIndex = this.statusIndex(this.appointment?.status);
