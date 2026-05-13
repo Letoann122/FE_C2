@@ -1,5 +1,84 @@
 <template>
   <div class="container-fluid py-4">
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+          <div>
+            <h5 class="fw-bold mb-1 text-danger">
+              <i class="bi bi-clock-history me-2"></i>Quản lý sức chứa slot
+            </h5>
+            <div class="text-muted small">Điều chỉnh sức chứa riêng cho ca sáng và ca chiều.</div>
+          </div>
+          <button class="btn btn-outline-secondary btn-sm" @click="loadSlotControl" :disabled="slotControl.loading">
+            <span v-if="slotControl.loading" class="spinner-border spinner-border-sm me-1"></span>
+            Tải slot
+          </button>
+        </div>
+
+        <div class="row g-3 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label small">Điểm hiến máu</label>
+            <select class="form-select" v-model="slotControl.donation_site_id">
+              <option disabled value="">Chọn điểm hiến</option>
+              <option v-for="site in donationSites" :key="site.id" :value="String(site.id)">
+                {{ site.name }}
+              </option>
+            </select>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label small">Ngày</label>
+            <input type="date" class="form-control" v-model="slotControl.date" />
+          </div>
+
+          <div class="col-md-2">
+            <button class="btn btn-danger w-100" @click="loadSlotControl" :disabled="slotControl.loading">
+              Xem slot
+            </button>
+          </div>
+        </div>
+
+        <div v-if="slotControl.slots.length" class="table-responsive mt-3">
+          <table class="table table-sm align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Khung giờ</th>
+                <th>Đã đăng ký</th>
+                <th>Còn trống</th>
+                <th style="width: 180px">Sức chứa</th>
+                <th class="text-end">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="slot in slotControl.slots" :key="slot.id">
+                <td class="fw-semibold">
+  {{
+    slot.time_slot_label ||
+    (
+      slot.start_time && slot.end_time
+        ? `${String(slot.start_time).slice(0, 5)} - ${String(slot.end_time).slice(0, 5)}`
+        : "-"
+    )
+  }}
+</td>
+                <td>{{ slot.current_count }}</td>
+                <td>{{ slot.available_count }}</td>
+                <td>
+                  <input type="number" min="0" class="form-control form-control-sm" v-model.number="slot.slot_capacity" />
+                </td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-primary" @click="saveSlotCapacity(slot)" :disabled="slotControl.savingId === slot.id">
+                    <span v-if="slotControl.savingId === slot.id" class="spinner-border spinner-border-sm me-1"></span>
+                    Lưu
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <div class="row g-4">
       <!-- Bộ lọc -->
       <div class="col-lg-3">
@@ -342,8 +421,16 @@ export default {
         from_date: "",
         to_date: "",
       },
+      donationSites: [],
       appointments: [],
       loadingList: false,
+      slotControl: {
+        donation_site_id: "",
+        date: new Date().toISOString().slice(0, 10),
+        slots: [],
+        loading: false,
+        savingId: null,
+      },
       totalAppointments: 0,
 
       pageSize: 15,
@@ -389,6 +476,7 @@ export default {
   },
 
   mounted() {
+    this.loadDonationSites();
     this.loadAppointments({});
   },
 
@@ -404,6 +492,73 @@ export default {
       if (page < 1 || page > this.totalPages) return;
       this.currentPage = page;
       window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+
+    loadDonationSites() {
+      baseRequestDoctor
+        .get("doctor/donation-sites")
+        .then((res) => {
+          if (res.data?.status) {
+            this.donationSites = res.data.data || [];
+            if (!this.slotControl.donation_site_id && this.donationSites.length) {
+              this.slotControl.donation_site_id = String(this.donationSites[0].id);
+              this.loadSlotControl();
+            }
+          }
+        })
+        .catch(() => this.$toast?.error?.("Không tải được điểm hiến máu!"));
+    },
+
+    loadSlotControl() {
+      if (!this.slotControl.donation_site_id || !this.slotControl.date) {
+        this.$toast?.error?.("Chọn điểm hiến và ngày trước!");
+        return;
+      }
+
+      this.slotControl.loading = true;
+      baseRequestDoctor
+        .get("doctor/appointment-slots", {
+          params: {
+            donation_site_id: this.slotControl.donation_site_id,
+            date: this.slotControl.date,
+          },
+        })
+        .then((res) => {
+          if (res.data?.status) {
+            this.slotControl.slots = res.data.data || [];
+          } else {
+            this.$toast?.error?.(res.data?.message || "Không tải được slot!");
+          }
+        })
+        .catch(() => this.$toast?.error?.("Không tải được slot!"))
+        .finally(() => {
+          this.slotControl.loading = false;
+        });
+    },
+
+    saveSlotCapacity(slot) {
+      if (!slot) return;
+
+      this.slotControl.savingId = slot.id;
+      baseRequestDoctor
+        .put(`doctor/appointment-slots/${slot.id}`, {
+          slot_capacity: Number(slot.slot_capacity),
+        })
+        .then((res) => {
+          if (res.data?.status) {
+            this.$toast?.success?.(res.data.message || "Đã lưu slot!");
+            this.loadSlotControl();
+          } else {
+            this.$toast?.error?.(res.data?.message || "Không lưu được slot!");
+          }
+        })
+        .catch((err) => {
+          const message = err.response?.data?.message || "Không lưu được slot!";
+          this.$toast?.error?.(message);
+        })
+        .finally(() => {
+          this.slotControl.savingId = null;
+        });
     },
 
     loadAppointments(params = {}) {

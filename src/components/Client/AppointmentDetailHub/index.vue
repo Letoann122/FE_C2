@@ -1,8 +1,6 @@
 <template>
   <div class="container py-5 appointment-detail-page">
-    <div
-      class="mb-4 border-bottom pb-3 d-flex justify-content-between align-items-center flex-wrap gap-2"
-    >
+    <div class="mb-4 border-bottom pb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
       <div>
         <h3 class="fw-bold text-danger mb-1">
           <i class="bi bi-calendar-event me-2"></i>
@@ -13,10 +11,7 @@
         </p>
       </div>
 
-      <button
-        class="btn btn-outline-secondary"
-        @click="$router.push('/my-appointments')"
-      >
+      <button class="btn btn-outline-secondary" @click="$router.push('/my-appointments')">
         <i class="bi bi-arrow-left me-1"></i>
         Quay lại danh sách
       </button>
@@ -33,7 +28,6 @@
     </div>
 
     <div v-else-if="appointment" class="row g-4">
-      <!-- LEFT -->
       <div class="col-lg-4">
         <div class="card border-0 shadow-sm rounded-4">
           <div class="card-body p-4">
@@ -54,6 +48,9 @@
             <div class="detail-row">
               <div class="small text-muted">Ca hiến máu</div>
               <div class="fw-semibold">{{ timeSlotLabel }}</div>
+              <div v-if="slotCapacityLabel" class="small text-danger mt-1">
+                Slot: {{ slotCapacityLabel }}
+              </div>
             </div>
 
             <div class="detail-row">
@@ -74,36 +71,29 @@
               </div>
             </div>
 
-            <div
-              v-if="
-                appointment.status === 'COMPLETED' &&
-                appointment.donation?.volume_ml
-              "
-              class="detail-row"
-            >
+            <div v-if="
+              appointment.status === 'COMPLETED' &&
+              appointment.donation?.volume_ml
+            " class="detail-row">
               <div class="small text-muted">Lượng máu đã hiến</div>
               <div class="fw-semibold text-danger">
                 {{ appointment.donation.volume_ml }} ml
               </div>
             </div>
-            <div
-              v-if="
-                appointment.status === 'COMPLETED' && appointment.completed_at
-              "
-              class="detail-row"
-            >
+
+            <div v-if="
+              appointment.status === 'COMPLETED' && appointment.completed_at
+            " class="detail-row">
               <div class="small text-muted">Thời gian hoàn tất</div>
               <div class="fw-semibold">
                 {{ formatDateTime(appointment.completed_at) }}
               </div>
             </div>
+
             <div class="detail-row border-0 mb-0 pb-0">
               <div class="small text-muted">Trạng thái hiện tại</div>
               <div>
-                <span
-                  class="badge"
-                  :class="statusBadgeClass(appointment.status)"
-                >
+                <span class="badge" :class="statusBadgeClass(appointment.status)">
                   {{ statusLabel(appointment.status) }}
                 </span>
               </div>
@@ -116,12 +106,7 @@
             <h6 class="fw-bold mb-3">Thẻ QR Check-in</h6>
 
             <div class="qr-box">
-              <img
-                v-if="qrCodeDataUrl"
-                :src="qrCodeDataUrl"
-                alt="QR"
-                class="qr-image"
-              />
+              <img v-if="qrCodeDataUrl" :src="qrCodeDataUrl" alt="QR" class="qr-image" />
             </div>
 
             <div class="text-center mt-3">
@@ -146,10 +131,8 @@
         </div>
       </div>
 
-      <!-- RIGHT -->
       <div class="col-lg-8">
         <div class="row g-4">
-          <!-- LIVE STATUS -->
           <div class="col-12">
             <div class="card border-0 shadow-sm rounded-4">
               <div class="card-body p-4">
@@ -172,18 +155,15 @@
             </div>
           </div>
 
-          <!-- QUEUE / CURRENT STATE -->
           <div class="col-lg-6">
             <div class="card border-0 shadow-sm rounded-4 h-100">
               <div class="card-body p-4">
                 <h5 class="fw-bold mb-3">Tình trạng hiện tại</h5>
 
-                <div
-                  v-if="
-                    appointment.status === 'APPROVED' ||
-                    appointment.status === 'BOOKED'
-                  "
-                >
+                <div v-if="
+                  appointment.status === 'APPROVED' ||
+                  appointment.status === 'BOOKED'
+                ">
                   <div class="alert alert-success rounded-4 small mb-0">
                     Lịch hẹn đã được xác nhận. Vui lòng đến đúng khung giờ và
                     trình QR để check-in.
@@ -256,7 +236,6 @@
             </div>
           </div>
 
-          <!-- HEALTH NOTE -->
           <div class="col-lg-6">
             <div class="card border-0 shadow-sm rounded-4 h-100">
               <div class="card-body p-4">
@@ -278,7 +257,6 @@
             </div>
           </div>
 
-          <!-- STEP TRACKER -->
           <div class="col-12">
             <div class="card border-0 shadow-sm rounded-4">
               <div class="card-body p-4">
@@ -298,33 +276,21 @@
                       <div class="step-sub">{{ stepSubText(step.key) }}</div>
                     </div>
 
-                    <div
-                      v-if="index < steps.length - 1"
-                      class="queue-line"
-                      :class="lineClass(step.key)"
-                    ></div>
+                    <div v-if="index < steps.length - 1" class="queue-line" :class="lineClass(step.key)"></div>
                   </template>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- TIMELINE -->
           <div class="col-12">
             <div class="card border-0 shadow-sm rounded-4">
               <div class="card-body p-4">
                 <h5 class="fw-bold mb-3">Dòng thời gian</h5>
 
                 <div class="timeline">
-                  <div
-                    v-for="item in timelineItems"
-                    :key="item.key"
-                    class="timeline-item"
-                  >
-                    <div
-                      class="timeline-dot"
-                      :class="{ active: item.value }"
-                    ></div>
+                  <div v-for="item in timelineItems" :key="item.key" class="timeline-item">
+                    <div class="timeline-dot" :class="{ active: item.value }"></div>
                     <div>
                       <div class="fw-semibold">{{ item.label }}</div>
                       <div class="small text-muted">
@@ -367,37 +333,37 @@ export default {
       socketJoined: false,
 
       steps: [
-  {
-    key: "REQUESTED",
-    title: "Chờ duyệt",
-    icon: "bi bi-hourglass-split",
-  },
-  {
-    key: "APPROVED",
-    title: "Xác nhận lịch",
-    icon: "bi bi-calendar-check",
-  },
-  {
-    key: "CHECKED_IN",
-    title: "Check-in",
-    icon: "bi bi-qr-code-scan",
-  },
-  {
-    key: "SCREENING",
-    title: "Sàng lọc",
-    icon: "bi bi-heart-pulse",
-  },
-  {
-    key: "DONATING",
-    title: "Hiến máu",
-    icon: "bi bi-droplet-fill",
-  },
-  {
-    key: "COMPLETED",
-    title: "Hoàn tất",
-    icon: "bi bi-stars",
-  },
-],
+        {
+          key: "REQUESTED",
+          title: "Chờ duyệt",
+          icon: "bi bi-hourglass-split",
+        },
+        {
+          key: "APPROVED",
+          title: "Xác nhận lịch",
+          icon: "bi bi-calendar-check",
+        },
+        {
+          key: "CHECKED_IN",
+          title: "Check-in",
+          icon: "bi bi-qr-code-scan",
+        },
+        {
+          key: "SCREENING",
+          title: "Sàng lọc",
+          icon: "bi bi-heart-pulse",
+        },
+        {
+          key: "DONATING",
+          title: "Hiến máu",
+          icon: "bi bi-droplet-fill",
+        },
+        {
+          key: "COMPLETED",
+          title: "Hoàn tất",
+          icon: "bi bi-stars",
+        },
+      ],
     };
   },
 
@@ -417,13 +383,37 @@ export default {
       );
     },
 
+    slotInfo() {
+      return this.appointment?.slot || this.appointment?.slot_info || null;
+    },
+
     timeSlotLabel() {
+      if (this.slotInfo?.start_time && this.slotInfo?.end_time) {
+        return `${String(this.slotInfo.start_time).slice(0, 5)} - ${String(
+          this.slotInfo.end_time
+        ).slice(0, 5)}`;
+      }
+
       if (!this.appointment?.scheduled_at) return "Không có dữ liệu";
 
       const hour = new Date(this.appointment.scheduled_at).getHours();
 
       if (hour < 12) return "Ca sáng";
       return "Ca chiều";
+    },
+
+    slotCapacityLabel() {
+      if (!this.slotInfo) return "";
+
+      const current = this.slotInfo.current_count;
+      const capacity = this.slotInfo.slot_capacity;
+
+      if (current === undefined || capacity === undefined) return "";
+
+      const percent =
+        this.slotInfo.percent !== undefined ? ` (${this.slotInfo.percent}%)` : "";
+
+      return `${current}/${capacity} người${percent}`;
     },
 
     currentStatusInfo() {
@@ -613,7 +603,6 @@ export default {
           return;
         }
 
-        // ĐỔI ENDPOINT NÀY CHO ĐÚNG API DETAIL CỦA PROJECT BẠN NẾU KHÁC
         const res = await baseRequestClient.get(
           "/donor/appointment-process/detail",
           {
@@ -641,7 +630,12 @@ export default {
 
       socket.emit("join_appointment", this.appointmentId);
 
+      if (this.slotInfo?.id) {
+        socket.emit("join_slot", this.slotInfo.id);
+      }
+
       socket.on("appointment_updated", this.handleAppointmentUpdated);
+      socket.on("slot_capacity_updated", this.handleSlotCapacityUpdated);
 
       this.socketJoined = true;
     },
@@ -652,6 +646,7 @@ export default {
       }
 
       socket.off("appointment_updated", this.handleAppointmentUpdated);
+      socket.off("slot_capacity_updated", this.handleSlotCapacityUpdated);
 
       this.socketJoined = false;
     },
@@ -675,6 +670,21 @@ export default {
       }, 6000);
     },
 
+    handleSlotCapacityUpdated(payload) {
+      if (!payload?.slot_id || !this.slotInfo) return;
+
+      if (String(payload.slot_id) !== String(this.slotInfo.id)) return;
+
+      this.appointment = {
+        ...this.appointment,
+        slot: {
+          ...this.slotInfo,
+          ...payload,
+          id: payload.slot_id,
+        },
+      };
+    },
+
     async generateQr() {
       try {
         if (!this.appointment?.appointment_code) return;
@@ -692,18 +702,18 @@ export default {
     },
 
     statusIndex(status) {
-  const map = {
-    REQUESTED: 0,
-    APPROVED: 1,
-    BOOKED: 1,
-    CHECKED_IN: 2,
-    SCREENING: 3,
-    DONATING: 4,
-    COMPLETED: 5,
-  };
+      const map = {
+        REQUESTED: 0,
+        APPROVED: 1,
+        BOOKED: 1,
+        CHECKED_IN: 2,
+        SCREENING: 3,
+        DONATING: 4,
+        COMPLETED: 5,
+      };
 
-  return map[status] ?? -1;
-},
+      return map[status] ?? -1;
+    },
 
     stepClass(stepKey) {
       const currentIndex = this.statusIndex(this.appointment?.status);

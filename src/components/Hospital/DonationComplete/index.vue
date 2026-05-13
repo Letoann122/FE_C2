@@ -1,5 +1,76 @@
 <template>
   <div class="container py-4">
+    <div class="row g-4 mb-4">
+      <div class="col-md-4">
+        <div class="slot-monitor-card">
+          <div class="small text-muted">Ca sáng 07:00 - 11:00</div>
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="fw-bold fs-5">
+              {{ slotMonitor.morning.current_count }}/{{ slotMonitor.morning.slot_capacity }}
+            </div>
+            <span class="badge" :class="slotBadgeClass(slotMonitor.morning.percent)">
+              {{ slotMonitor.morning.percent }}%
+            </span>
+          </div>
+          <div class="progress mt-2" style="height: 6px">
+            <div
+              class="progress-bar bg-danger"
+              :style="{ width: `${Math.min(slotMonitor.morning.percent, 100)}%` }"
+            ></div>
+          </div>
+          <div class="small text-muted mt-1">
+            Completed ca sáng: {{ completedBySlot("morning") }}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="slot-monitor-card">
+          <div class="small text-muted">Ca chiều 13:00 - 17:00</div>
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="fw-bold fs-5">
+              {{ slotMonitor.afternoon.current_count }}/{{ slotMonitor.afternoon.slot_capacity }}
+            </div>
+            <span class="badge" :class="slotBadgeClass(slotMonitor.afternoon.percent)">
+              {{ slotMonitor.afternoon.percent }}%
+            </span>
+          </div>
+          <div class="progress mt-2" style="height: 6px">
+            <div
+              class="progress-bar bg-primary"
+              :style="{ width: `${Math.min(slotMonitor.afternoon.percent, 100)}%` }"
+            ></div>
+          </div>
+          <div class="small text-muted mt-1">
+            Completed ca chiều: {{ completedBySlot("afternoon") }}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="slot-monitor-card">
+          <div class="small text-muted">Tổng slot hôm nay</div>
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="fw-bold fs-5">
+              {{ slotMonitor.total.current_count }}/{{ slotMonitor.total.slot_capacity }}
+            </div>
+            <span class="badge" :class="slotBadgeClass(slotMonitor.total.percent)">
+              {{ slotMonitor.total.percent }}%
+            </span>
+          </div>
+          <div class="progress mt-2" style="height: 6px">
+            <div
+              class="progress-bar bg-success"
+              :style="{ width: `${Math.min(slotMonitor.total.percent, 100)}%` }"
+            ></div>
+          </div>
+          <div class="small text-muted mt-1">
+            Realtime slot monitor
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="row g-4">
       <div class="col-lg-4">
         <div class="card shadow-sm border-0 rounded-4">
@@ -8,18 +79,27 @@
               <i class="bi bi-search-heart me-2"></i>
               Tìm lịch đã duyệt
             </h5>
+
             <div class="mb-3">
               <label class="form-label small">Mã lịch hiến máu</label>
-              <input type="text" class="form-control" placeholder="Nhập mã lịch hiến máu" v-model="loc_lich.ma_lich" />
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Nhập mã lịch hiến máu"
+                v-model="loc_lich.ma_lich"
+              />
             </div>
+
             <div class="mb-3">
               <label class="form-label small">Từ ngày</label>
               <input type="date" class="form-control" v-model="loc_lich.from_date" />
             </div>
+
             <div class="mb-3">
               <label class="form-label small">Đến ngày</label>
               <input type="date" class="form-control" v-model="loc_lich.to_date" />
             </div>
+
             <div class="d-flex justify-content-end">
               <button class="btn btn-danger" @click="locDanhSach" :disabled="dang_tai">
                 <span v-if="dang_tai" class="spinner-border spinner-border-sm me-1"></span>
@@ -30,7 +110,6 @@
         </div>
       </div>
 
-      <!-- TABLE -->
       <div class="col-lg-8">
         <div class="card shadow-sm border-0 rounded-4">
           <div class="card-header bg-white border-0">
@@ -40,12 +119,10 @@
           </div>
 
           <div class="card-body p-0">
-            <!-- loading -->
             <div v-if="dang_tai" class="p-4 text-center">
               <div class="spinner-border text-danger"></div>
             </div>
 
-            <!-- table -->
             <div v-else class="table-responsive">
               <table class="table table-hover align-middle mb-0">
                 <thead>
@@ -60,12 +137,19 @@
                 </thead>
 
                 <tbody>
+                  <tr v-if="paginatedData.length === 0">
+                    <td colspan="6" class="text-center text-muted py-4">
+                      Không có lịch phù hợp.
+                    </td>
+                  </tr>
+
                   <tr v-for="(value, index) in paginatedData" :key="value.id">
                     <td>{{ index + 1 + (page - 1) * per_page }}</td>
+
                     <td>
-                      <span class="badge bg-light text-dark">{{
-                        value.appointment_code
-                        }}</span>
+                      <span class="badge bg-light text-dark">
+                        {{ value.appointment_code }}
+                      </span>
                     </td>
 
                     <td>
@@ -94,15 +178,14 @@
               </table>
             </div>
 
-            <!-- PAGINATION -->
             <div class="d-flex justify-content-between align-items-center p-3">
               <button class="btn btn-outline-secondary btn-sm" :disabled="page === 1" @click="page--">
                 « Trang trước
               </button>
 
-              <span>Trang {{ page }} / {{ totalPages }}</span>
+              <span>Trang {{ page }} / {{ totalPages || 1 }}</span>
 
-              <button class="btn btn-outline-secondary btn-sm" :disabled="page === totalPages" @click="page++">
+              <button class="btn btn-outline-secondary btn-sm" :disabled="page === totalPages || totalPages === 0" @click="page++">
                 Trang sau »
               </button>
             </div>
@@ -111,7 +194,6 @@
       </div>
     </div>
 
-    <!-- MODAL -->
     <div class="modal fade" id="modalGhiNhan" tabindex="-1">
       <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content rounded-4">
@@ -120,7 +202,7 @@
               <i class="bi bi-check2-circle text-success me-2"></i> Ghi nhận
               hiến máu
             </h5>
-            <button class="btn-close" data-bs-dismiss="modal"></button>
+            <button class="btn-close" data-bs-dismiss="modal" :disabled="dang_luu"></button>
           </div>
 
           <div class="modal-body">
@@ -191,6 +273,7 @@
             <button class="btn btn-secondary" data-bs-dismiss="modal" :disabled="dang_luu">
               Hủy
             </button>
+
             <button class="btn btn-success" :disabled="dang_luu" @click="luu">
               <span v-if="dang_luu" class="spinner-border spinner-border-sm me-1"></span>
               Xác nhận hiến máu
@@ -204,12 +287,14 @@
 
 <script>
 import baseRequestDoctor from "../../../core/baseRequestDoctor";
+import socket from "../../../core/socket";
 
 export default {
   data() {
     return {
       loc_lich: { ma_lich: "", from_date: "", to_date: "" },
       danh_sach_lich: [],
+      slots: [],
       total_items: 0,
       dang_tai: false,
       page: 1,
@@ -233,17 +318,139 @@ export default {
     totalPages() {
       return Math.ceil(this.total_items / this.per_page);
     },
+
     paginatedData() {
       const start = (this.page - 1) * this.per_page;
       return this.danh_sach_lich.slice(start, start + this.per_page);
+    },
+
+    slotMonitor() {
+      const monitor = {
+        morning: this.emptySlotMonitor(),
+        afternoon: this.emptySlotMonitor(),
+        total: this.emptySlotMonitor(),
+      };
+
+      this.slots.forEach((slot) => {
+        const key = String(slot.start_time || "").slice(0, 5) < "12:00"
+          ? "morning"
+          : "afternoon";
+
+        monitor[key].current_count += Number(slot.current_count || 0);
+        monitor[key].slot_capacity += Number(slot.slot_capacity || 0);
+        monitor[key].available_count += Number(slot.available_count || 0);
+
+        monitor.total.current_count += Number(slot.current_count || 0);
+        monitor.total.slot_capacity += Number(slot.slot_capacity || 0);
+        monitor.total.available_count += Number(slot.available_count || 0);
+      });
+
+      ["morning", "afternoon", "total"].forEach((key) => {
+        const item = monitor[key];
+
+        item.percent =
+          item.slot_capacity > 0
+            ? Math.round((item.current_count / item.slot_capacity) * 100)
+            : 0;
+      });
+
+      return monitor;
     },
   },
 
   mounted() {
     this.taiDanhSach();
+    this.loadSlots();
+    this.initSocket();
+  },
+
+  beforeUnmount() {
+    socket.off("slot_capacity_updated", this.handleSlotRealtime);
+    socket.off("appointment_updated", this.handleAppointmentRealtime);
   },
 
   methods: {
+    initSocket() {
+      if (!socket.connected) socket.connect();
+
+      socket.on("slot_capacity_updated", this.handleSlotRealtime);
+      socket.on("appointment_updated", this.handleAppointmentRealtime);
+    },
+
+    handleSlotRealtime(payload) {
+      if (!payload?.slot_id) return;
+
+      const index = this.slots.findIndex(
+        (slot) => String(slot.id) === String(payload.slot_id)
+      );
+
+      if (index !== -1) {
+        this.slots.splice(index, 1, {
+          ...this.slots[index],
+          ...payload,
+          id: payload.slot_id,
+        });
+      } else {
+        this.loadSlots();
+      }
+    },
+
+    handleAppointmentRealtime() {
+      this.taiDanhSach();
+    },
+
+    emptySlotMonitor() {
+      return {
+        current_count: 0,
+        slot_capacity: 0,
+        available_count: 0,
+        percent: 0,
+      };
+    },
+
+    today() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    },
+
+    async loadSlots() {
+      try {
+        const res = await baseRequestDoctor.get("/doctor/appointment-slots", {
+          params: {
+            date: this.today(),
+          },
+        });
+
+        if (res.data?.status) {
+          this.slots = res.data.data || [];
+
+          this.slots.forEach((slot) => {
+            socket.emit("join_slot", slot.id);
+          });
+        }
+      } catch (error) {
+        console.error("loadSlots error:", error);
+      }
+    },
+
+    completedBySlot(slot) {
+      return this.danh_sach_lich.filter((item) => {
+        const time = item.time_range || "";
+        const isMorning = time.startsWith("07") || time.includes("07:00");
+
+        return slot === "morning" ? isMorning : !isMorning;
+      }).length;
+    },
+
+    slotBadgeClass(percent) {
+      if (percent >= 100) return "bg-danger";
+      if (percent >= 80) return "bg-warning text-dark";
+      return "bg-success";
+    },
+
     taiDanhSach(params = {}) {
       this.dang_tai = true;
       this.page = 1;
@@ -277,7 +484,7 @@ export default {
 
     defaultDatetime(dateStr) {
       const now = new Date();
-      const [y, m, d] = dateStr.split("-");
+      const [y, m, d] = String(dateStr).split("-");
       return `${y}-${m}-${d}T${String(now.getHours()).padStart(
         2,
         "0"
@@ -311,6 +518,7 @@ export default {
               document.getElementById("modalGhiNhan")
             ).hide();
             this.taiDanhSach();
+            this.loadSlots();
           }
         })
         .catch(() => this.$toast.error("Lỗi server!"))
@@ -319,3 +527,13 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.slot-monitor-card {
+  min-width: 160px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: #f8f9fa;
+  border: 1px solid #edf0f2;
+}
+</style>

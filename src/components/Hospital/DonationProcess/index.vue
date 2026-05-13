@@ -14,16 +14,49 @@
                 <i class="bi bi-heart-pulse text-danger me-2"></i>
                 Quy trình hiến máu
               </h4>
+
+              <div v-if="slotLabel" class="small text-muted">
+                Khung giờ: <strong>{{ slotLabel }}</strong>
+                <span v-if="slotCapacityLabel" class="text-danger ms-2">
+                  Slot: {{ slotCapacityLabel }}
+                </span>
+              </div>
             </div>
 
             <span class="badge fs-6" :class="statusClass(appointment.status)">
               {{ statusText(appointment.status) }}
             </span>
           </div>
+
+          <div v-if="slotInfo" class="slot-process-box mt-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-semibold">Tình trạng slot realtime</div>
+                <div class="small text-muted">
+                  {{ slotLabel }}
+                </div>
+              </div>
+
+              <span class="badge" :class="slotBadgeClass(slotInfo.percent)">
+                {{ slotInfo.percent || 0 }}%
+              </span>
+            </div>
+
+            <div class="progress mt-2" style="height: 7px">
+              <div
+                class="progress-bar bg-danger"
+                :style="{ width: `${Math.min(slotInfo.percent || 0, 100)}%` }"
+              ></div>
+            </div>
+
+            <div class="small text-muted mt-1">
+              Đã đăng ký {{ slotInfo.current_count || 0 }}/{{ slotInfo.slot_capacity || 0 }},
+              còn trống {{ slotInfo.available_count || 0 }}.
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- donor info -->
       <div class="row g-4">
         <div class="col-lg-5">
           <div class="card border-0 shadow-sm rounded-4 h-100">
@@ -94,7 +127,7 @@
               <div class="info-item">
                 <div class="label">Địa điểm hiến máu</div>
                 <div class="value">
-                  {{ appointment.donation_site?.name || "Không có dữ liệu" }}
+                  {{ appointment.donation_site?.name || appointment.site_name || "Không có dữ liệu" }}
                 </div>
               </div>
 
@@ -108,7 +141,6 @@
           </div>
         </div>
 
-        <!-- workflow -->
         <div class="col-lg-7">
           <div class="card border-0 shadow-sm rounded-4">
             <div class="card-body p-4">
@@ -117,7 +149,6 @@
                 Thông tin hiến máu
               </h5>
 
-              <!-- checked in -->
               <div v-if="appointment.status === 'CHECKED_IN'">
                 <div class="alert alert-success rounded-4">
                   Người hiến đã check-in và đang chờ sàng lọc.
@@ -125,14 +156,11 @@
 
                 <button class="btn btn-danger" :disabled="processing" @click="startScreening">
                   <span v-if="processing" class="spinner-border spinner-border-sm me-2"></span>
-
                   <i v-else class="bi bi-play-circle me-2"></i>
-
                   Bắt đầu sàng lọc
                 </button>
               </div>
 
-              <!-- screening -->
               <div v-if="appointment.status === 'SCREENING'">
                 <div class="alert alert-info rounded-4">
                   Bác sĩ nhập kết quả sàng lọc để quyết định người hiến có đủ
@@ -169,9 +197,7 @@
                 <div class="d-flex gap-2 mt-4 flex-wrap">
                   <button class="btn btn-danger" :disabled="processing" @click="startDonation">
                     <span v-if="processing" class="spinner-border spinner-border-sm me-2"></span>
-
                     <i v-else class="bi bi-check-circle me-2"></i>
-
                     Đủ điều kiện hiến máu
                   </button>
 
@@ -181,7 +207,6 @@
                 </div>
               </div>
 
-              <!-- donating -->
               <div v-if="appointment.status === 'DONATING'">
                 <div class="alert alert-warning rounded-4">
                   Người hiến đang trong quá trình hiến máu.
@@ -200,27 +225,22 @@
 
                   <div class="col-md-6">
                     <label class="form-label fw-semibold">Nhóm máu</label>
-
                     <input v-model="donation.blood_group" class="form-control" />
                   </div>
 
                   <div class="col-12">
                     <label class="form-label fw-semibold">Ghi chú</label>
-
                     <textarea v-model="donation.notes" class="form-control" rows="3"></textarea>
                   </div>
                 </div>
 
                 <button class="btn btn-danger mt-4" :disabled="processing" @click="completeDonation">
                   <span v-if="processing" class="spinner-border spinner-border-sm me-2"></span>
-
                   <i v-else class="bi bi-heart-fill me-2"></i>
-
                   Hoàn tất hiến máu
                 </button>
               </div>
 
-              <!-- completed -->
               <div v-if="appointment.status === 'COMPLETED'">
                 <div class="alert alert-primary rounded-4">
                   Quy trình hiến máu đã hoàn tất và máu đã được nhập kho.
@@ -262,17 +282,14 @@
                 </div>
               </div>
 
-              <!-- failed -->
               <div v-if="appointment.status === 'FAILED_SCREENING'">
                 <div class="alert alert-danger rounded-4">
                   Người hiến không đạt điều kiện sàng lọc.
                 </div>
               </div>
 
-              <!-- notes -->
               <div v-if="appointment.notes" class="border rounded-4 p-3 bg-light mt-4">
                 <div class="fw-bold mb-2">Ghi chú hệ thống</div>
-
                 <pre class="mb-0 note-pre">{{ appointment.notes }}</pre>
               </div>
 
@@ -299,6 +316,7 @@
 
 <script>
 import baseRequestDoctor from "../../../core/baseRequestDoctor";
+import socket from "../../../core/socket";
 
 export default {
   name: "HospitalDonationProcess",
@@ -307,11 +325,10 @@ export default {
     return {
       loading: false,
       processing: false,
-
       appointment: null,
-
       successMessage: "",
       errorMessage: "",
+      slotInfo: null,
 
       screening: {
         blood_pressure: "",
@@ -329,29 +346,111 @@ export default {
     };
   },
 
+  computed: {
+    appointmentId() {
+      return this.$route.query.appointment_id;
+    },
+
+    slotLabel() {
+      const slot = this.slotInfo || this.appointment?.slot || this.appointment?.slot_info;
+
+      if (slot?.start_time && slot?.end_time) {
+        return `${String(slot.start_time).slice(0, 5)} - ${String(slot.end_time).slice(0, 5)}`;
+      }
+
+      if (!this.appointment?.scheduled_at) return "";
+
+      const hour = new Date(this.appointment.scheduled_at).getHours();
+      return hour < 12 ? "Ca sáng" : "Ca chiều";
+    },
+
+    slotCapacityLabel() {
+      const slot = this.slotInfo || this.appointment?.slot || this.appointment?.slot_info;
+
+      if (!slot) return "";
+
+      if (slot.current_count === undefined || slot.slot_capacity === undefined) {
+        return "";
+      }
+
+      return `${slot.current_count}/${slot.slot_capacity} (${slot.percent || 0}%)`;
+    },
+  },
+
   mounted() {
     this.loadDetail();
+    this.initSocket();
+  },
+
+  beforeUnmount() {
+    socket.off("appointment_updated", this.handleAppointmentRealtime);
+    socket.off("slot_capacity_updated", this.handleSlotRealtime);
   },
 
   methods: {
+    initSocket() {
+      if (!socket.connected) socket.connect();
+
+      if (this.appointmentId) {
+        socket.emit("join_appointment", this.appointmentId);
+      }
+
+      socket.on("appointment_updated", this.handleAppointmentRealtime);
+      socket.on("slot_capacity_updated", this.handleSlotRealtime);
+    },
+
+    handleAppointmentRealtime(payload) {
+      if (String(payload.appointment_id) !== String(this.appointmentId)) return;
+      this.loadDetail();
+    },
+
+    handleSlotRealtime(payload) {
+      if (!payload?.slot_id) return;
+
+      const currentSlotId =
+        this.slotInfo?.id ||
+        this.appointment?.slot?.id ||
+        this.appointment?.slot_info?.id;
+
+      if (currentSlotId && String(currentSlotId) === String(payload.slot_id)) {
+        this.slotInfo = {
+          ...(this.slotInfo || {}),
+          ...payload,
+          id: payload.slot_id,
+        };
+      }
+    },
+
     async loadDetail() {
       this.loading = true;
       this.errorMessage = "";
 
       try {
-        const appointmentId = this.$route.query.appointment_id;
-
         const res = await baseRequestDoctor.get(
           "/doctor/donation-process/detail",
           {
             params: {
-              appointment_id: appointmentId,
+              appointment_id: this.appointmentId,
             },
           }
         );
 
         if (res.data.status) {
           this.appointment = res.data.data;
+
+          this.slotInfo =
+            this.appointment?.slot ||
+            this.appointment?.slot_info ||
+            null;
+
+          const slotId =
+            this.slotInfo?.id ||
+            this.appointment?.appointment_slot_id ||
+            this.appointment?.slot_id;
+
+          if (slotId) {
+            socket.emit("join_slot", slotId);
+          }
 
           this.donation.blood_group =
             this.appointment?.donor?.blood_group || "";
@@ -475,6 +574,12 @@ export default {
       }
     },
 
+    slotBadgeClass(percent) {
+      if (Number(percent) >= 100) return "bg-danger";
+      if (Number(percent) >= 80) return "bg-warning text-dark";
+      return "bg-success";
+    },
+
     clearMessage() {
       this.successMessage = "";
       this.errorMessage = "";
@@ -539,5 +644,12 @@ export default {
   white-space: pre-wrap;
   font-family: inherit;
   font-size: 14px;
+}
+
+.slot-process-box {
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: #fff5f5;
+  border: 1px solid #f1c2c2;
 }
 </style>

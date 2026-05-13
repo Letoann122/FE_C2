@@ -67,6 +67,9 @@
                   <div class="small text-muted">Thời gian</div>
                   <div class="fw-semibold">{{ card.time_slot }}</div>
                   <div class="small text-muted">{{ formatDate(card.date) }}</div>
+                  <div v-if="card.slot_capacity_label" class="small text-danger mt-1">
+                    Slot: {{ card.slot_capacity_label }}
+                  </div>
                 </div>
               </div>
 
@@ -189,6 +192,7 @@
 <script>
 import QRCode from "qrcode";
 import baseRequestClient from "../../../core/baseRequestClient";
+import socket from "../../../core/socket";
 
 import {
   getAppointmentStatusLabel,
@@ -222,6 +226,7 @@ export default {
           full_name: "",
           blood_group: "Chưa xác định",
           time_slot: "",
+          slot_capacity_label: "",
           date: "",
           site_name: "",
           address: "",
@@ -251,10 +256,12 @@ export default {
           "Chưa xác định",
 
         time_slot:
+          this.getTimeRangeFromSlot(this.appointment.slot) ||
           this.appointment.time_slot ||
           this.appointment.slot?.time_slot ||
-          this.getTimeRangeFromSlot(this.appointment.slot) ||
           "Chưa có khung giờ",
+
+        slot_capacity_label: this.getSlotCapacityLabel(this.appointment.slot),
 
         date: this.appointment.scheduled_at,
 
@@ -277,9 +284,50 @@ export default {
 
   async mounted() {
     await this.getAppointment();
+    this.initSocket();
+  },
+
+  beforeUnmount() {
+    socket.off("appointment_updated", this.handleAppointmentUpdated);
+    socket.off("slot_capacity_updated", this.handleSlotCapacityUpdated);
   },
 
   methods: {
+    initSocket() {
+      if (!socket.connected) socket.connect();
+
+      socket.on("appointment_updated", this.handleAppointmentUpdated);
+      socket.on("slot_capacity_updated", this.handleSlotCapacityUpdated);
+
+      if (this.appointmentId) {
+        socket.emit("join_appointment", this.appointmentId);
+      }
+
+      if (this.appointment?.slot?.id) {
+        socket.emit("join_slot", this.appointment.slot.id);
+      }
+    },
+
+    async handleAppointmentUpdated(payload) {
+      if (String(payload.appointment_id) !== String(this.appointmentId)) return;
+      await this.getAppointment();
+    },
+
+    handleSlotCapacityUpdated(payload) {
+      if (!payload?.slot_id || !this.appointment?.slot) return;
+
+      if (String(payload.slot_id) !== String(this.appointment.slot.id)) return;
+
+      this.appointment = {
+        ...this.appointment,
+        slot: {
+          ...this.appointment.slot,
+          ...payload,
+          id: payload.slot_id,
+        },
+      };
+    },
+
     async getAppointment() {
       this.isLoading = true;
 
@@ -329,6 +377,19 @@ export default {
       const end = String(slot.end_time).slice(0, 5);
 
       return `${start} - ${end}`;
+    },
+
+    getSlotCapacityLabel(slot) {
+      if (!slot) return "";
+
+      if (slot.current_count === undefined || slot.slot_capacity === undefined) {
+        return "";
+      }
+
+      const percent =
+        slot.percent !== undefined ? ` (${slot.percent}%)` : "";
+
+      return `${slot.current_count}/${slot.slot_capacity} người${percent}`;
     },
 
     formatDate(date) {

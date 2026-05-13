@@ -16,7 +16,6 @@
           <i class="bi bi-arrow-left me-1"></i>Quay lại
         </button>
 
-        <!-- Disable khi đã ended -->
         <button
           class="btn btn-warning me-2"
           :disabled="isClosed"
@@ -79,7 +78,6 @@
                 </strong>
               </li>
 
-              <!-- STATUS – dùng DB -->
               <li class="list-group-item d-flex justify-content-between bg-light">
                 <span>Trạng thái</span>
                 <button
@@ -112,6 +110,70 @@
           </div>
         </div>
 
+        <!-- SLOT LIST -->
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+            <span>
+              <i class="bi bi-clock-history text-danger me-2"></i>
+              Slot chiến dịch
+            </span>
+
+            <button class="btn btn-sm btn-outline-secondary" @click="loadCampaignSlots">
+              <i class="bi bi-arrow-clockwise me-1"></i>Tải lại
+            </button>
+          </div>
+
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Ngày</th>
+                    <th>Khung giờ</th>
+                    <th>Đã đăng ký</th>
+                    <th>Số lượng</th>
+                    <th>Còn trống</th>
+                    <th>Full %</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr v-for="slot in campaignSlots" :key="slot.id">
+                    <td>
+                      {{ formatDate(slot.slot_date) }}
+                    </td>
+
+                    <td>
+                      {{ String(slot.start_time).slice(0, 5) }}
+                      -
+                      {{ String(slot.end_time).slice(0, 5) }}
+                    </td>
+
+                    <td>{{ slot.current_count }}</td>
+                    <td>{{ slot.slot_capacity }}</td>
+                    <td>{{ slot.available_count }}</td>
+
+                    <td>
+                      <span
+                        class="fw-bold"
+                        :class="slot.percent >= 80 ? 'text-danger' : 'text-success'"
+                      >
+                        {{ slot.percent }}%
+                      </span>
+                    </td>
+                  </tr>
+
+                  <tr v-if="campaignSlots.length === 0">
+                    <td colspan="6" class="text-center text-muted py-3">
+                      Chưa có slot chiến dịch
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
         <!-- LIST -->
         <div class="card shadow-sm border-0">
           <div
@@ -123,7 +185,6 @@
             </span>
           </div>
 
-          <!-- Nếu chưa duyệt -->
           <div v-if="!canViewAppointments" class="p-4 text-center text-muted">
             <i class="bi bi-shield-lock fs-3 d-block mb-2"></i>
             Chiến dịch <strong>chưa được Admin duyệt</strong> nên chưa hiển thị
@@ -169,7 +230,7 @@
       </div>
     </div>
 
-    <!-- CLOSE MODAL (Bootstrap data-api) -->
+    <!-- CLOSE MODAL -->
     <div
       class="modal fade"
       id="closeCampaignModal"
@@ -196,7 +257,6 @@
             <button class="btn btn-secondary" data-bs-dismiss="modal">
               Huỷ
             </button>
-            <!-- modal tự đóng bằng data-bs-dismiss -->
             <button
               class="btn btn-danger"
               @click="confirmClose"
@@ -209,7 +269,7 @@
       </div>
     </div>
 
-    <!-- EDIT MODAL (Bootstrap data-api) -->
+    <!-- EDIT MODAL -->
     <div
       class="modal fade"
       id="editCampaignModal"
@@ -275,7 +335,6 @@
             <button class="btn btn-secondary" data-bs-dismiss="modal">
               Huỷ
             </button>
-            <!-- modal tự đóng, mình chỉ call API -->
             <button
               class="btn btn-warning"
               @click="confirmEdit"
@@ -297,6 +356,7 @@
 
 <script>
 import baseRequestDoctor from "../../../core/baseRequestDoctor";
+import socket from "../../../core/socket";
 
 export default {
   data() {
@@ -304,6 +364,7 @@ export default {
       loaded: false,
       campaign: {},
       appointments: [],
+      campaignSlots: [],
       form: {},
       canEditFull: true,
     };
@@ -312,6 +373,12 @@ export default {
   mounted() {
     const id = this.$route.params.id;
     this.loadDetail(id);
+    this.loadCampaignSlots();
+    this.initSocket();
+  },
+
+  beforeUnmount() {
+    socket.off("slot_capacity_updated", this.handleSlotCapacityUpdated);
   },
 
   computed: {
@@ -324,13 +391,22 @@ export default {
   },
 
   methods: {
+    initSocket() {
+      if (!socket.connected) socket.connect();
+
+      socket.on("slot_capacity_updated", this.handleSlotCapacityUpdated);
+    },
+
+    handleSlotCapacityUpdated() {
+      this.loadCampaignSlots();
+    },
+
     async loadDetail(id) {
       try {
         const res = await baseRequestDoctor.get(`/doctor/campaigns/${id}`);
         if (res.data.status) {
           this.campaign = res.data.data;
 
-          // chỉ load appointments khi đã duyệt
           if (this.campaign.approval_status === "approved") {
             const rs2 = await baseRequestDoctor.get(
               `/doctor/campaigns/${id}/appointments`
@@ -347,7 +423,30 @@ export default {
       }
     },
 
-    // chuẩn bị dữ liệu trước khi mở modal sửa
+    async loadCampaignSlots() {
+      try {
+        const res = await baseRequestDoctor.get(
+          "/doctor/appointment-slots",
+          {
+            params: {
+              type: "campaign",
+              campaign_id: this.$route.params.id,
+            },
+          }
+        );
+
+        if (res.data.status) {
+          this.campaignSlots = res.data.data || [];
+
+          this.campaignSlots.forEach((slot) => {
+            socket.emit("join_slot", slot.id);
+          });
+        }
+      } catch (error) {
+        console.error("loadCampaignSlots error:", error);
+      }
+    },
+
     prepareEdit() {
       if (this.isClosed) {
         this.$toast?.error?.("Chiến dịch đã đóng — không thể sửa!");
@@ -370,6 +469,7 @@ export default {
               res.data.message || "Cập nhật chiến dịch thành công!"
             );
             this.loadDetail(this.campaign.id);
+            this.loadCampaignSlots();
           } else {
             this.$toast?.error?.(
               res.data.message || "Không thể cập nhật chiến dịch"
@@ -386,6 +486,7 @@ export default {
           if (res.data.status) {
             this.$toast?.success?.("Đã đóng chiến dịch!");
             this.loadDetail(this.campaign.id);
+            this.loadCampaignSlots();
           } else {
             this.$toast?.error?.(
               res.data.message || "Không thể đóng chiến dịch"
@@ -402,6 +503,11 @@ export default {
         " - " +
         new Date(e).toLocaleDateString("vi-VN")
       );
+    },
+
+    formatDate(date) {
+      if (!date) return "-";
+      return new Date(date).toLocaleDateString("vi-VN");
     },
 
     getCampaignStatus(item) {

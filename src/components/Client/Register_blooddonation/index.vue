@@ -47,13 +47,55 @@
                 <input type="date" v-model="form.date" class="form-control" :min="minDate" />
               </div>
 
-              <div class="col-lg-6">
+              <div class="col-lg-12">
                 <label class="form-label">Khung giờ *</label>
-                <select class="form-select" v-model="form.time_slot">
-                  <option disabled value="">Chọn khung giờ</option>
-                  <option>7:00 - 11:00</option>
-                  <option>13:00 - 17:00</option>
-                </select>
+
+                <div v-if="loadingSlots" class="text-muted small">
+                  <span class="spinner-border spinner-border-sm me-1"></span>
+                  Đang tải slot...
+                </div>
+
+                <div v-else-if="!form.donation_site_id || !form.date" class="alert alert-light border small mb-0">
+                  Vui lòng chọn địa điểm và ngày hiến để xem khung giờ còn chỗ.
+                </div>
+
+                <div v-else-if="slots.length === 0" class="alert alert-warning small mb-0">
+                  Chưa có slot khả dụng cho ngày và địa điểm này.
+                </div>
+
+                <div v-else class="row g-2">
+                  <div class="col-md-6" v-for="slot in slots" :key="slot.id">
+                    <button
+                      type="button"
+                      class="slot-card w-100 text-start"
+                      :class="{
+                        active: String(form.appointment_slot_id) === String(slot.id),
+                        disabled: slot.is_full,
+                      }"
+                      :disabled="slot.is_full"
+                      @click="selectSlot(slot)"
+                    >
+                      <div class="d-flex justify-content-between align-items-center mb-1">
+                        <strong>{{ formatSlotTime(slot) }}</strong>
+                        <span class="badge" :class="slot.is_full ? 'bg-secondary' : 'bg-success'">
+                          {{ slot.is_full ? "Đã đầy" : "Còn chỗ" }}
+                        </span>
+                      </div>
+
+                      <div class="small text-muted mb-2">
+                        {{ slot.current_count }} / {{ slot.slot_capacity }} người
+                        <span v-if="slot.percent !== undefined">({{ slot.percent }}%)</span>
+                      </div>
+
+                      <div class="progress" style="height: 6px">
+                        <div
+                          class="progress-bar bg-danger"
+                          :style="{ width: `${Math.min(slot.percent || 0, 100)}%` }"
+                        ></div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div class="col-lg-12">
@@ -87,9 +129,10 @@
       <div class="col-lg-6" v-if="selectedSite">
         <div class="card p-4 shadow-sm border-0 rounded-4">
           <h5 class="fw-bold mb-3">
-            <i class="bi bi-geo-alt-fill text-danger me-2"></i> Địa điểm hiến
-            máu đã chọn
+            <i class="bi bi-geo-alt-fill text-danger me-2"></i>
+            Địa điểm hiến máu đã chọn
           </h5>
+
           <div class="d-flex justify-content-between align-items-start border rounded-3 p-3 bg-white">
             <div class="me-3">
               <p class="fw-semibold mb-1">{{ selectedSite.name }}</p>
@@ -138,8 +181,8 @@
         <div class="card p-4 shadow-sm border-0 rounded-4">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h5 class="fw-bold mb-0">
-              <i class="bi bi-clock-history text-danger me-2"></i>Lịch hiến máu
-              của bạn
+              <i class="bi bi-clock-history text-danger me-2"></i>
+              Lịch hiến máu của bạn
             </h5>
 
             <button
@@ -162,6 +205,7 @@
                 <tr>
                   <th>Mã lịch</th>
                   <th>Ngày</th>
+                  <th>Khung giờ</th>
                   <th>Điểm hiến</th>
                   <th>Trạng thái</th>
                   <th class="text-end">Thao tác</th>
@@ -175,31 +219,11 @@
                     </span>
                   </td>
                   <td>{{ formatDate(a.scheduled_at) }}</td>
-                  <td>{{ a.donation_site?.name }}</td>
+                  <td>{{ formatSlotTime(a.slot) || formatTime(a.scheduled_at) }}</td>
+                  <td>{{ a.donation_site?.name || a.campaign?.title || "-" }}</td>
                   <td>
-                    <span class="badge" :class="{
-                      'bg-warning text-dark': a.status === 'REQUESTED',
-                      'bg-success': a.status === 'APPROVED',
-                      'bg-secondary': a.status === 'REJECTED',
-                      'bg-dark': a.status === 'CANCELLED',
-                      'bg-info text-dark': a.status === 'BOOKED',
-                      'bg-primary': a.status === 'COMPLETED',
-                    }">
-                      {{
-                        a.status === "REQUESTED"
-                          ? "Chờ duyệt"
-                          : a.status === "APPROVED"
-                          ? "Đã duyệt"
-                          : a.status === "REJECTED"
-                          ? "Từ chối"
-                          : a.status === "CANCELLED"
-                          ? "Đã hủy"
-                          : a.status === "BOOKED"
-                          ? "Đã đặt"
-                          : a.status === "COMPLETED"
-                          ? "Hoàn thành"
-                          : a.status
-                      }}
+                    <span class="badge" :class="statusBadgeClass(a.status)">
+                      {{ statusLabel(a.status) }}
                     </span>
                   </td>
                   <td class="text-end">
@@ -222,28 +246,32 @@
           </div>
         </div>
       </div>
+
     </div>
   </div>
 </template>
 
 <script>
 import baseRequestClient from "../../../core/baseRequestClient";
+import socket from "../../../core/socket";
 
 export default {
   data() {
     return {
       loadingProfile: false,
       loadingAppointments: false,
+      loadingSlots: false,
       submitting: false,
       submittingCancelId: null,
       donation_sites: [],
       myAppointments: [],
+      slots: [],
       form: {
         full_name: "",
         blood_group: "",
         donation_site_id: "",
         date: "",
-        time_slot: "",
+        appointment_slot_id: "",
         volume: "",
         note: "",
       },
@@ -260,6 +288,14 @@ export default {
         ) || null
       );
     },
+
+    selectedSlot() {
+      return (
+        this.slots.find((s) => String(s.id) === String(this.form.appointment_slot_id)) ||
+        null
+      );
+    },
+
     minDate() {
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
@@ -268,17 +304,154 @@ export default {
     },
   },
 
+  watch: {
+    "form.donation_site_id"() {
+      this.form.appointment_slot_id = "";
+      this.loadSlots();
+    },
+
+    "form.date"() {
+      this.form.appointment_slot_id = "";
+      this.loadSlots();
+    },
+  },
+
   mounted() {
     this.loadDonationSites();
     this.loadProfile();
     this.loadMyAppointments();
+    this.initSocket();
+  },
+
+  beforeUnmount() {
+    socket.off("slot_capacity_updated", this.handleSlotCapacityUpdated);
+    socket.off("appointment_updated", this.handleAppointmentUpdated);
   },
 
   methods: {
+    initSocket() {
+      if (!socket.connected) socket.connect();
+
+      socket.on("slot_capacity_updated", this.handleSlotCapacityUpdated);
+      socket.on("appointment_updated", this.handleAppointmentUpdated);
+    },
+
+    handleSlotCapacityUpdated(payload) {
+      if (!payload?.slot_id) return;
+
+      const index = this.slots.findIndex(
+        (slot) => String(slot.id) === String(payload.slot_id)
+      );
+
+      if (index !== -1) {
+        this.slots.splice(index, 1, {
+          ...this.slots[index],
+          ...payload,
+          id: payload.slot_id,
+        });
+      }
+    },
+
+    handleAppointmentUpdated() {
+      this.loadMyAppointments();
+    },
+
+    statusLabel(status) {
+      const map = {
+        REQUESTED: "Chờ duyệt",
+        APPROVED: "Đã duyệt",
+        REJECTED: "Từ chối",
+        CANCELLED: "Đã hủy",
+        BOOKED: "Đã đặt",
+        CHECKED_IN: "Đã check-in",
+        SCREENING: "Đang sàng lọc",
+        FAILED_SCREENING: "Không đủ điều kiện",
+        DONATING: "Đang hiến máu",
+        COMPLETED: "Hoàn thành",
+        NO_SHOW: "Vắng mặt",
+      };
+
+      return map[status] || status;
+    },
+
+    statusBadgeClass(status) {
+      return {
+        "bg-warning text-dark": status === "REQUESTED",
+        "bg-success": status === "APPROVED",
+        "bg-secondary": ["REJECTED", "NO_SHOW"].includes(status),
+        "bg-dark": status === "CANCELLED",
+        "bg-info text-dark": ["BOOKED", "CHECKED_IN", "SCREENING"].includes(status),
+        "bg-danger": status === "FAILED_SCREENING",
+        "bg-primary": ["DONATING", "COMPLETED"].includes(status),
+      };
+    },
+
     formatDate(date) {
+      if (!date) return "-";
       const d = new Date(date);
       const pad = (n) => (n < 10 ? "0" + n : n);
       return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+    },
+
+    formatTime(date) {
+      if (!date) return "-";
+      const d = new Date(date);
+      return `${String(d.getHours()).padStart(2, "0")}:${String(
+        d.getMinutes()
+      ).padStart(2, "0")}`;
+    },
+
+    formatSlotTime(slot) {
+      if (!slot?.start_time || !slot?.end_time) return "";
+      return `${String(slot.start_time).slice(0, 5)} - ${String(slot.end_time).slice(0, 5)}`;
+    },
+
+    normalizeVolume(value) {
+      if (!value) return null;
+      return Number(String(value).replace(/[^\d]/g, ""));
+    },
+
+    selectSlot(slot) {
+      if (slot.is_full) {
+        this.$toast?.error?.("Khung giờ này đã đủ số lượng người đăng ký!");
+        return;
+      }
+
+      this.form.appointment_slot_id = slot.id;
+    },
+
+    loadSlots() {
+      if (!this.form.donation_site_id || !this.form.date) {
+        this.slots = [];
+        return;
+      }
+
+      this.loadingSlots = true;
+
+      baseRequestClient
+        .get("/donor/appointment-slots", {
+          params: {
+            type: "fixed_point",
+            donation_site_id: this.form.donation_site_id,
+            date: this.form.date,
+          },
+        })
+        .then((res) => {
+          if (res.data.status) {
+            this.slots = res.data.data || [];
+
+            this.slots.forEach((slot) => {
+              socket.emit("join_slot", slot.id);
+            });
+          }
+        })
+        .catch((err) => {
+          const message = err.response?.data?.message || "Lỗi tải danh sách slot";
+          this.$toast?.error?.(message);
+        })
+        .finally(() => {
+          this.loadingSlots = false;
+        });
     },
 
     mapEmbedUrl(site) {
@@ -298,6 +471,8 @@ export default {
 
     clearSelectedSite() {
       this.form.donation_site_id = "";
+      this.form.appointment_slot_id = "";
+      this.slots = [];
       this.$router.replace({
         path: this.$route.path,
         query: {},
@@ -319,12 +494,16 @@ export default {
 
     loadProfile() {
       this.loadingProfile = true;
+
       baseRequestClient
         .get("/donor/me")
         .then((res) => {
           if (!res.data.status) return;
+
           const u = res.data.data || {};
+
           if (!this.form.full_name) this.form.full_name = u.full_name;
+
           if (!this.form.blood_group && this.bloodGroups.includes(u.blood_group)) {
             this.form.blood_group = u.blood_group;
           }
@@ -333,7 +512,9 @@ export default {
           const message = err.response?.data?.message || "Lỗi tải thông tin";
           this.$toast?.error?.(message);
         })
-        .finally(() => (this.loadingProfile = false));
+        .finally(() => {
+          this.loadingProfile = false;
+        });
     },
 
     loadDonationSites() {
@@ -352,34 +533,24 @@ export default {
         });
     },
 
-    buildScheduledAt(dateStr, slot) {
-      if (!dateStr || !slot) return null;
-      const left = slot.split("-")[0].trim();
-      const [hour, minute] = left.split(":");
-      const hh = String(hour || "7").padStart(2, "0");
-      const mm = String(minute || "0").padStart(2, "0");
-      return `${dateStr} ${hh}:${mm}:00`;
-    },
-
     submitBooking() {
       if (
         !this.form.full_name ||
         !this.form.blood_group ||
         !this.form.donation_site_id ||
         !this.form.date ||
-        !this.form.time_slot ||
+        !this.form.appointment_slot_id ||
         !this.form.volume
       ) {
         this.$toast?.error?.("Vui lòng điền đầy đủ thông tin bắt buộc.");
         return;
       }
 
-      const scheduled_at = this.buildScheduledAt(this.form.date, this.form.time_slot);
-
       const payload = {
         donation_site_id: Number(this.form.donation_site_id),
-        scheduled_at,
-        time_slot: this.form.time_slot,
+        appointment_slot_id: Number(this.form.appointment_slot_id),
+        slot_id: Number(this.form.appointment_slot_id),
+        preferred_volume_ml: this.normalizeVolume(this.form.volume),
         volume: this.form.volume,
         notes: this.form.note || null,
       };
@@ -401,15 +572,19 @@ export default {
           const message = err.response?.data?.message || "Đã có lỗi xảy ra";
           this.$toast?.error?.(message);
         })
-        .finally(() => (this.submitting = false));
+        .finally(() => {
+          this.submitting = false;
+        });
     },
 
     resetForm() {
       this.form.donation_site_id = "";
       this.form.date = "";
-      this.form.time_slot = "";
+      this.form.appointment_slot_id = "";
       this.form.volume = "";
       this.form.note = "";
+      this.slots = [];
+
       this.$router.replace({
         path: this.$route.path,
         query: {},
@@ -418,26 +593,31 @@ export default {
 
     loadMyAppointments() {
       this.loadingAppointments = true;
+
       baseRequestClient
         .get("/donor/donation-appointments")
         .then((res) => {
-          if (res.data.status) this.myAppointments = res.data.data;
+          if (res.data.status) this.myAppointments = res.data.data || [];
         })
         .catch((err) => {
           const message = err.response?.data?.message || "Lỗi tải lịch sử";
           this.$toast?.error?.(message);
         })
-        .finally(() => (this.loadingAppointments = false));
+        .finally(() => {
+          this.loadingAppointments = false;
+        });
     },
 
     cancelAppointment(a) {
       this.submittingCancelId = a.id;
+
       baseRequestClient
         .post(`/donor/donation-appointments/${a.id}/cancel`)
         .then((res) => {
           if (res.data.status) {
             this.$toast?.success?.(res.data.message);
             this.loadMyAppointments();
+            this.loadSlots();
           } else {
             this.$toast?.error?.(res.data.message);
           }
@@ -446,7 +626,9 @@ export default {
           const message = err.response?.data?.message || "Lỗi hủy lịch";
           this.$toast?.error?.(message);
         })
-        .finally(() => (this.submittingCancelId = null));
+        .finally(() => {
+          this.submittingCancelId = null;
+        });
     },
   },
 };
@@ -460,5 +642,29 @@ export default {
 .form-check-input:checked {
   background-color: #dc3545;
   border-color: #dc3545;
+}
+
+.slot-card {
+  border: 1px solid #dee2e6;
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px;
+  transition: 0.2s ease;
+}
+
+.slot-card:hover {
+  border-color: #dc3545;
+  box-shadow: 0 0.25rem 0.75rem rgba(220, 53, 69, 0.08);
+}
+
+.slot-card.active {
+  border-color: #dc3545;
+  background: #fff5f5;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.12);
+}
+
+.slot-card.disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 </style>

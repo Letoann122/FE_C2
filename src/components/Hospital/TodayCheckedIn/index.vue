@@ -13,10 +13,81 @@
             </p>
           </div>
 
-          <button class="btn btn-outline-danger" @click="loadData">
+          <button class="btn btn-outline-danger" @click="loadAll">
             <i class="bi bi-arrow-clockwise me-1"></i>
             Tải lại
           </button>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <div class="slot-monitor-card">
+              <div class="small text-muted">Ca sáng 07:00 - 11:00</div>
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="fw-bold fs-5">
+                  {{ slotMonitor.morning.current_count }}/{{ slotMonitor.morning.slot_capacity }}
+                </div>
+                <span class="badge" :class="slotBadgeClass(slotMonitor.morning.percent)">
+                  {{ slotMonitor.morning.percent }}%
+                </span>
+              </div>
+              <div class="progress mt-2" style="height: 6px">
+                <div
+                  class="progress-bar bg-danger"
+                  :style="{ width: `${Math.min(slotMonitor.morning.percent, 100)}%` }"
+                ></div>
+              </div>
+              <div class="small text-muted mt-1">
+                Còn trống: {{ slotMonitor.morning.available_count }}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="slot-monitor-card">
+              <div class="small text-muted">Ca chiều 13:00 - 17:00</div>
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="fw-bold fs-5">
+                  {{ slotMonitor.afternoon.current_count }}/{{ slotMonitor.afternoon.slot_capacity }}
+                </div>
+                <span class="badge" :class="slotBadgeClass(slotMonitor.afternoon.percent)">
+                  {{ slotMonitor.afternoon.percent }}%
+                </span>
+              </div>
+              <div class="progress mt-2" style="height: 6px">
+                <div
+                  class="progress-bar bg-primary"
+                  :style="{ width: `${Math.min(slotMonitor.afternoon.percent, 100)}%` }"
+                ></div>
+              </div>
+              <div class="small text-muted mt-1">
+                Còn trống: {{ slotMonitor.afternoon.available_count }}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="slot-monitor-card">
+              <div class="small text-muted">Tổng slot hôm nay</div>
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="fw-bold fs-5">
+                  {{ slotMonitor.total.current_count }}/{{ slotMonitor.total.slot_capacity }}
+                </div>
+                <span class="badge" :class="slotBadgeClass(slotMonitor.total.percent)">
+                  {{ slotMonitor.total.percent }}%
+                </span>
+              </div>
+              <div class="progress mt-2" style="height: 6px">
+                <div
+                  class="progress-bar bg-success"
+                  :style="{ width: `${Math.min(slotMonitor.total.percent, 100)}%` }"
+                ></div>
+              </div>
+              <div class="small text-muted mt-1">
+                Realtime khi donor đặt / huỷ lịch
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="row g-3 mb-4">
@@ -165,6 +236,7 @@
 
 <script>
 import baseRequestDoctor from "../../../core/baseRequestDoctor";
+import socket from "../../../core/socket";
 
 export default {
   name: "HospitalTodayCheckedIn",
@@ -179,6 +251,7 @@ export default {
         status: "",
       },
       list: [],
+      slots: [],
     };
   },
 
@@ -202,13 +275,123 @@ export default {
         );
       });
     },
+
+    slotMonitor() {
+      const monitor = {
+        morning: this.emptySlotMonitor(),
+        afternoon: this.emptySlotMonitor(),
+        total: this.emptySlotMonitor(),
+      };
+
+      this.slots.forEach((slot) => {
+        const key = String(slot.start_time || "").slice(0, 5) < "12:00"
+          ? "morning"
+          : "afternoon";
+
+        monitor[key].current_count += Number(slot.current_count || 0);
+        monitor[key].slot_capacity += Number(slot.slot_capacity || 0);
+        monitor[key].available_count += Number(slot.available_count || 0);
+
+        monitor.total.current_count += Number(slot.current_count || 0);
+        monitor.total.slot_capacity += Number(slot.slot_capacity || 0);
+        monitor.total.available_count += Number(slot.available_count || 0);
+      });
+
+      ["morning", "afternoon", "total"].forEach((key) => {
+        const item = monitor[key];
+
+        item.percent =
+          item.slot_capacity > 0
+            ? Math.round((item.current_count / item.slot_capacity) * 100)
+            : 0;
+      });
+
+      return monitor;
+    },
   },
 
   mounted() {
-    this.loadData();
+    this.loadAll();
+    this.initSocket();
+  },
+
+  beforeUnmount() {
+    socket.off("slot_capacity_updated", this.handleSlotRealtime);
+    socket.off("appointment_updated", this.handleAppointmentRealtime);
   },
 
   methods: {
+    initSocket() {
+      if (!socket.connected) socket.connect();
+
+      socket.on("slot_capacity_updated", this.handleSlotRealtime);
+      socket.on("appointment_updated", this.handleAppointmentRealtime);
+    },
+
+    handleSlotRealtime(payload) {
+      if (!payload?.slot_id) return;
+
+      const index = this.slots.findIndex(
+        (slot) => String(slot.id) === String(payload.slot_id)
+      );
+
+      if (index !== -1) {
+        this.slots.splice(index, 1, {
+          ...this.slots[index],
+          ...payload,
+          id: payload.slot_id,
+        });
+      } else {
+        this.loadSlots();
+      }
+    },
+
+    handleAppointmentRealtime() {
+      this.loadData();
+    },
+
+    loadAll() {
+      this.loadData();
+      this.loadSlots();
+    },
+
+    emptySlotMonitor() {
+      return {
+        current_count: 0,
+        slot_capacity: 0,
+        available_count: 0,
+        percent: 0,
+      };
+    },
+
+    today() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    },
+
+    async loadSlots() {
+      try {
+        const res = await baseRequestDoctor.get("/doctor/appointment-slots", {
+          params: {
+            date: this.today(),
+          },
+        });
+
+        if (res.data?.status) {
+          this.slots = res.data.data || [];
+
+          this.slots.forEach((slot) => {
+            socket.emit("join_slot", slot.id);
+          });
+        }
+      } catch (error) {
+        console.error("loadSlots error:", error);
+      }
+    },
+
     async loadData() {
       this.loading = true;
       this.errorMessage = "";
@@ -239,6 +422,12 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+
+    slotBadgeClass(percent) {
+      if (percent >= 100) return "bg-danger";
+      if (percent >= 80) return "bg-warning text-dark";
+      return "bg-success";
     },
 
     countBySlot(slot) {
@@ -292,7 +481,8 @@ export default {
 </script>
 
 <style scoped>
-.summary-box {
+.summary-box,
+.slot-monitor-card {
   min-width: 160px;
   padding: 14px 18px;
   border-radius: 16px;
