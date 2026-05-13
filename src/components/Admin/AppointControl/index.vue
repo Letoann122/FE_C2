@@ -10,6 +10,82 @@
       </div>
     </div>
 
+    <!-- QUẢN LÝ SỨC CHỨA SLOT -->
+    <div class="card shadow-sm border-0 rounded-4 mb-3">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+          <div>
+            <h5 class="fw-bold mb-1">
+              <i class="fa-solid fa-clock text-danger me-2"></i>Quản lý sức chứa khung giờ
+            </h5>
+            <div class="text-muted small">Mỗi ngày tại mỗi site có 2 slot riêng: sáng và chiều.</div>
+          </div>
+          <button class="btn btn-outline-secondary btn-sm" @click="loadSlotControl" :disabled="slotControl.loading">
+            <span v-if="slotControl.loading" class="spinner-border spinner-border-sm me-1"></span>
+            Tải slot
+          </button>
+        </div>
+
+        <div class="row g-3 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label small">Site</label>
+            <select class="form-select" v-model="slotControl.donation_site_id">
+              <option disabled value="">Chọn site</option>
+              <option v-for="site in sites" :key="site.id" :value="String(site.id)">
+                {{ site.name }}
+              </option>
+            </select>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label small">Ngày</label>
+            <input type="date" class="form-control" v-model="slotControl.date" />
+          </div>
+
+          <div class="col-md-2">
+            <button class="btn btn-danger w-100" @click="loadSlotControl" :disabled="slotControl.loading">
+              Xem slot
+            </button>
+          </div>
+        </div>
+
+        <div v-if="slotControl.slots.length" class="table-responsive mt-3">
+          <table class="table table-sm align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Khung giờ</th>
+                <th>Đã đăng ký</th>
+                <th>Còn trống</th>
+                <th style="width: 180px">Sức chứa</th>
+                <th class="text-end">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="slot in slotControl.slots" :key="slot.id">
+                <td class="fw-semibold">{{ slot.time_slot_label }}</td>
+                <td>{{ slot.current_count }}</td>
+                <td>{{ slot.available_count }}</td>
+                <td>
+                  <input
+                    type="number"
+                    min="0"
+                    class="form-control form-control-sm"
+                    v-model.number="slot.slot_capacity"
+                  />
+                </td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-primary" @click="saveSlotCapacity(slot)" :disabled="slotControl.savingId === slot.id">
+                    <span v-if="slotControl.savingId === slot.id" class="spinner-border spinner-border-sm me-1"></span>
+                    Lưu
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- BỘ LỌC -->
     <div class="card shadow-sm border-0 rounded-4 mb-3">
       <div class="card-body">
@@ -313,6 +389,13 @@ export default {
       sites: [],
       doctors: [],
       slots: ["07:00","08:00","09:00","10:00","11:00","13:00","14:00","15:00","16:00","17:00"],
+      slotControl: {
+        donation_site_id: "",
+        date: new Date().toISOString().slice(0, 10),
+        slots: [],
+        loading: false,
+        savingId: null,
+      },
 
       // ✅ dropdown dùng label tiếng Việt nhưng value vẫn là status code từ DB/API
       statusOptions: [
@@ -401,12 +484,68 @@ export default {
             this.appointments = res.data.data || [];
             this.doctors = res.data.doctors || [];
             this.sites = res.data.sites || [];
+            if (!this.slotControl.donation_site_id && this.sites.length) {
+              this.slotControl.donation_site_id = String(this.sites[0].id);
+              this.loadSlotControl();
+            }
             this.applyFilter();
           } else {
             this.$toast.error(res.data.message);
           }
         })
         .catch(() => this.$toast.error("Lỗi tải dữ liệu!"));
+    },
+
+    loadSlotControl() {
+      if (!this.slotControl.donation_site_id || !this.slotControl.date) {
+        this.$toast.info("Chọn site và ngày trước!");
+        return;
+      }
+
+      this.slotControl.loading = true;
+      baseRequestAdmin
+        .get("/admin/appointment-slots", {
+          params: {
+            donation_site_id: this.slotControl.donation_site_id,
+            date: this.slotControl.date,
+          },
+        })
+        .then((res) => {
+          if (res.data?.status) {
+            this.slotControl.slots = res.data.data || [];
+          } else {
+            this.$toast.error(res.data?.message || "Không tải được slot!");
+          }
+        })
+        .catch(() => this.$toast.error("Không tải được slot!"))
+        .finally(() => {
+          this.slotControl.loading = false;
+        });
+    },
+
+    saveSlotCapacity(slot) {
+      if (!slot) return;
+
+      this.slotControl.savingId = slot.id;
+      baseRequestAdmin
+        .put(`/admin/appointment-slots/${slot.id}`, {
+          slot_capacity: Number(slot.slot_capacity),
+        })
+        .then((res) => {
+          if (res.data?.status) {
+            this.$toast.success(res.data.message || "Đã lưu slot!");
+            this.loadSlotControl();
+          } else {
+            this.$toast.error(res.data?.message || "Không lưu được slot!");
+          }
+        })
+        .catch((err) => {
+          const message = err.response?.data?.message || "Không lưu được slot!";
+          this.$toast.error(message);
+        })
+        .finally(() => {
+          this.slotControl.savingId = null;
+        });
     },
 
     applyFilter() {

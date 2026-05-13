@@ -107,6 +107,10 @@
                 <td>
                   <div class="fw-semibold">{{ formatDate(a.scheduled_at) }}</div>
                   <div class="small text-muted">{{ getTimeSlot(a) }}</div>
+                  <div v-if="a.slot" class="small text-danger">
+                    Slot: {{ a.slot.current_count }}/{{ a.slot.slot_capacity }}
+                    <span v-if="a.slot.percent !== undefined">({{ a.slot.percent }}%)</span>
+                  </div>
                 </td>
 
                 <td>
@@ -132,19 +136,12 @@
                       Xem chi tiết
                     </button>
 
-                    <button
-                      v-if="canShowQr(a)"
-                      class="btn btn-sm btn-danger"
-                      @click="goQrCheckin(a)"
-                    >
+                    <button v-if="canShowQr(a)" class="btn btn-sm btn-danger" @click="goQrCheckin(a)">
                       <i class="bi bi-qr-code me-1"></i>Mã QR
                     </button>
 
-                    <button
-                      v-if="canCancel(a)"
-                      class="btn btn-sm btn-outline-danger"
-                      @click="cancelAppointment(a)"
-                    >
+                    <button v-if="canCancel(a)" class="btn btn-sm btn-outline-danger" @click="openCancelModal(a)"
+                      :disabled="isCancelling">
                       Hủy
                     </button>
                   </div>
@@ -161,11 +158,66 @@
         <i class="bi bi-plus-circle me-1"></i>Đặt lịch mới
       </router-link>
     </div>
+
+    <!-- CANCEL MODAL -->
+    <div class="modal fade" id="cancelAppointmentModal" tabindex="-1" aria-hidden="true" ref="cancelModalRef">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4">
+          <div class="modal-header">
+            <h5 class="modal-title text-danger">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              Xác nhận hủy lịch hẹn
+            </h5>
+
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+              :disabled="isCancelling"></button>
+          </div>
+
+          <div class="modal-body">
+            <p class="mb-2">
+              Bạn có chắc chắn muốn hủy lịch hẹn này không?
+            </p>
+
+            <div v-if="selectedCancelAppointment" class="alert alert-light border rounded-4 small mb-0">
+              <div>
+                <strong>Mã lịch:</strong>
+                {{ selectedCancelAppointment.appointment_code || `#${selectedCancelAppointment.id}` }}
+              </div>
+              <div>
+                <strong>Ngày hẹn:</strong>
+                {{ formatDate(selectedCancelAppointment.scheduled_at) }}
+              </div>
+              <div>
+                <strong>Khung giờ:</strong>
+                {{ getTimeSlot(selectedCancelAppointment) }}
+              </div>
+              <div>
+                <strong>Địa điểm:</strong>
+                {{ getSiteName(selectedCancelAppointment) }}
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal" :disabled="isCancelling">
+              Đóng
+            </button>
+
+            <button class="btn btn-danger" @click="confirmCancelAppointment"
+              :disabled="isCancelling || !selectedCancelAppointment">
+              <span v-if="isCancelling" class="spinner-border spinner-border-sm me-1"></span>
+              Xác nhận hủy
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import baseRequestClient from "../../../core/baseRequestClient";
+import socket from "../../../core/socket";
 import { createToaster } from "@meforma/vue-toaster";
 
 import {
@@ -181,8 +233,11 @@ export default {
   data() {
     return {
       isLoading: false,
+      isCancelling: false,
       filterStatus: "",
       appointments: [],
+      selectedCancelAppointment: null,
+      cancelModalInstance: null,
     };
   },
 
@@ -195,9 +250,71 @@ export default {
 
   mounted() {
     this.getMyAppointments();
+    this.initSocket();
+    this.initCancelModal();
+  },
+
+  beforeUnmount() {
+    socket.off("appointment_updated", this.handleAppointmentUpdated);
+    socket.off("slot_capacity_updated", this.handleSlotCapacityUpdated);
+
+    if (this.cancelModalInstance) {
+      this.cancelModalInstance.hide();
+      this.cancelModalInstance.dispose();
+      this.cancelModalInstance = null;
+    }
   },
 
   methods: {
+    initSocket() {
+      if (!socket.connected) socket.connect();
+
+      socket.on("appointment_updated", this.handleAppointmentUpdated);
+      socket.on("slot_capacity_updated", this.handleSlotCapacityUpdated);
+    },
+
+    initCancelModal() {
+      this.$nextTick(() => {
+        const modalEl = this.$refs.cancelModalRef;
+
+        if (window.bootstrap && modalEl) {
+          this.cancelModalInstance = new window.bootstrap.Modal(modalEl, {
+            backdrop: "static",
+            keyboard: false,
+          });
+
+          modalEl.addEventListener("hidden.bs.modal", () => {
+            if (!this.isCancelling) {
+              this.selectedCancelAppointment = null;
+            }
+          });
+        }
+      });
+    },
+
+    handleAppointmentUpdated() {
+      this.getMyAppointments();
+    },
+
+    handleSlotCapacityUpdated(payload) {
+      if (!payload?.slot_id) return;
+
+      this.appointments = this.appointments.map((item) => {
+        if (item.slot && String(item.slot.id) === String(payload.slot_id)) {
+          return {
+            ...item,
+            slot: {
+              ...item.slot,
+              ...payload,
+              id: payload.slot_id,
+            },
+          };
+        }
+
+        return item;
+      });
+    },
+
     async getMyAppointments() {
       this.isLoading = true;
 
@@ -217,25 +334,45 @@ export default {
       }
     },
 
-    async cancelAppointment(item) {
-      const appointmentCode = item.appointment_code || `#${item.id}`;
+    openCancelModal(item) {
+      if (this.isCancelling) return;
 
-      if (!confirm(`Bạn chắc chắn muốn hủy lịch ${appointmentCode}?`)) return;
+      this.selectedCancelAppointment = item;
+
+      this.$nextTick(() => {
+        if (!this.cancelModalInstance) {
+          this.initCancelModal();
+        }
+
+        this.cancelModalInstance?.show();
+      });
+    },
+
+    async confirmCancelAppointment() {
+      if (!this.selectedCancelAppointment || this.isCancelling) return;
+
+      this.isCancelling = true;
 
       try {
         const res = await baseRequestClient.post(
-          `/donor/donation-appointments/${item.id}/cancel`
+          `/donor/donation-appointments/${this.selectedCancelAppointment.id}/cancel`
         );
 
         if (res.data?.status) {
           toast.success(res.data.message || "Đã hủy lịch hẹn!");
+
+          this.cancelModalInstance?.hide();
+          this.selectedCancelAppointment = null;
+
           await this.getMyAppointments();
         } else {
           toast.error(res.data?.message || "Không thể hủy lịch hẹn!");
         }
       } catch (error) {
-        console.error("cancelAppointment error:", error);
+        console.error("confirmCancelAppointment error:", error);
         toast.error("Không thể hủy lịch hẹn!");
+      } finally {
+        this.isCancelling = false;
       }
     },
 
@@ -278,6 +415,13 @@ export default {
     },
 
     getTimeSlot(item) {
+      if (item.slot?.start_time && item.slot?.end_time) {
+        const start = String(item.slot.start_time).slice(0, 5);
+        const end = String(item.slot.end_time).slice(0, 5);
+
+        return `${start} - ${end}`;
+      }
+
       return item.time_slot || "Chưa có khung giờ";
     },
 

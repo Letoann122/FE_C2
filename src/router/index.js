@@ -126,6 +126,12 @@ const routes = [
     beforeEnter: checkAdmin,
   },
   {
+  path: "/admin/slot-dashboard",
+  component: () => import("../components/Admin/SlotDashboard/index.vue"),
+  meta: { layout: "admin", title: "Dashboard Slot" },
+  beforeEnter: checkAdmin,
+},
+  {
     path: "/admin/appoint-control",
     component: () => import("../components/Admin/AppointControl/index.vue"),
     meta: { layout: "admin", title: "Quản lý lịch hẹn" },

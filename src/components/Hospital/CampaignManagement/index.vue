@@ -229,7 +229,6 @@
 
                     <td>{{ item.registration_count || 0 }}</td>
 
-                    <!-- APPROVAL BADGE -->
                     <td>
                       <span v-if="item.approval_status === 'approved'" class="badge bg-success">Đã duyệt</span>
                       <span
@@ -242,7 +241,6 @@
                       <span v-else class="badge bg-warning text-dark">Chờ duyệt</span>
                     </td>
 
-                    <!-- STATUS BADGE -->
                     <td>
                       <span v-if="item.status === 'ended'" class="badge bg-secondary">Đã kết thúc</span>
                       <span v-else-if="item.status === 'running'" class="badge bg-success">Đang diễn ra</span>
@@ -250,6 +248,13 @@
                     </td>
 
                     <td class="text-end">
+                      <button
+                        class="btn btn-sm btn-outline-danger me-2"
+                        @click="openGenerateSlotModal(item)"
+                      >
+                        Tạo Slot
+                      </button>
+
                       <router-link
                         :to="`/Hospital/campaigns/${item.id}`"
                         class="btn btn-sm btn-outline-primary"
@@ -272,6 +277,100 @@
         </div>
       </div>
     </div>
+
+    <!-- GENERATE SLOT MODAL -->
+    <div
+      class="modal fade"
+      id="generateSlotModal"
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4">
+          <div class="modal-header">
+            <h5 class="modal-title text-danger">
+              Tạo slot chiến dịch
+            </h5>
+
+            <button
+              class="btn-close"
+              type="button"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+              ref="generateSlotCloseBtn"
+            ></button>
+          </div>
+
+          <div class="modal-body">
+            <div v-if="selectedCampaign" class="alert alert-light border small">
+              <strong>Chiến dịch:</strong> {{ selectedCampaign.title }}<br />
+              <span>
+                <strong>Thời gian:</strong>
+                {{ formatRange(selectedCampaign.start_date, selectedCampaign.end_date) }}
+              </span>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">
+                Số người hiến mỗi ca
+              </label>
+
+              <input
+                type="number"
+                class="form-control"
+                v-model.number="generateSlotForm.slot_capacity"
+                min="1"
+              />
+            </div>
+
+            <div class="form-check mb-2">
+              <input
+                id="includeMorning"
+                class="form-check-input"
+                type="checkbox"
+                v-model="generateSlotForm.include_morning"
+              />
+
+              <label class="form-check-label" for="includeMorning">
+                Ca sáng (07:00 - 11:00)
+              </label>
+            </div>
+
+            <div class="form-check">
+              <input
+                id="includeAfternoon"
+                class="form-check-input"
+                type="checkbox"
+                v-model="generateSlotForm.include_afternoon"
+              />
+
+              <label class="form-check-label" for="includeAfternoon">
+                Ca chiều (13:00 - 17:00)
+              </label>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+              :disabled="generatingSlot"
+            >
+              Đóng
+            </button>
+
+            <button
+              class="btn btn-danger"
+              @click="generateCampaignSlots"
+              :disabled="generatingSlot"
+            >
+              <span v-if="generatingSlot" class="spinner-border spinner-border-sm me-1"></span>
+              Tạo slot
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -285,6 +384,13 @@ export default {
     return {
       campaigns: [],
       donationSites: [],
+      selectedCampaign: null,
+      generatingSlot: false,
+      generateSlotForm: {
+        slot_capacity: 10,
+        include_morning: true,
+        include_afternoon: true,
+      },
       stats: {
         totalCampaigns: 0,
         totalRegistrations: 0,
@@ -424,6 +530,69 @@ export default {
         .catch(() => this.$toast.error("Lỗi server!"));
     },
 
+    openGenerateSlotModal(campaign) {
+      this.selectedCampaign = campaign;
+
+      this.generateSlotForm = {
+        slot_capacity: 10,
+        include_morning: true,
+        include_afternoon: true,
+      };
+
+      const modalEl = document.getElementById("generateSlotModal");
+
+      if (window.bootstrap && modalEl) {
+        const modal = new window.bootstrap.Modal(modalEl);
+        modal.show();
+      }
+    },
+
+    async generateCampaignSlots() {
+      try {
+        if (!this.selectedCampaign) {
+          this.$toast.error("Không tìm thấy chiến dịch!");
+          return;
+        }
+
+        if (!this.generateSlotForm.include_morning && !this.generateSlotForm.include_afternoon) {
+          this.$toast.error("Vui lòng chọn ít nhất một khung giờ!");
+          return;
+        }
+
+        if (!this.generateSlotForm.slot_capacity || Number(this.generateSlotForm.slot_capacity) <= 0) {
+          this.$toast.error("Số người phải lớn hơn 0!");
+          return;
+        }
+
+        this.generatingSlot = true;
+
+        const res = await baseRequestDoctor.post(
+          `/doctor/campaigns/${this.selectedCampaign.id}/generate-slots`,
+          {
+            slot_capacity: Number(this.generateSlotForm.slot_capacity),
+            include_morning: Boolean(this.generateSlotForm.include_morning),
+            include_afternoon: Boolean(this.generateSlotForm.include_afternoon),
+          }
+        );
+
+        if (res.data.status) {
+          this.$toast.success(res.data.message || "Tạo slot thành công!");
+          this.$refs.generateSlotCloseBtn?.click();
+        } else {
+          this.$toast.error(res.data.message || "Không thể tạo slot!");
+        }
+      } catch (error) {
+        console.error("generateCampaignSlots error:", error);
+
+        this.$toast.error(
+          error?.response?.data?.message ||
+            "Không thể tạo slot chiến dịch!"
+        );
+      } finally {
+        this.generatingSlot = false;
+      }
+    },
+
     formatRange(s, e) {
       if (!s || !e) return "-";
       return `${new Date(s).toLocaleDateString("vi-VN")} - ${new Date(e).toLocaleDateString("vi-VN")}`;
@@ -437,4 +606,3 @@ export default {
   font-weight: 500;
 }
 </style>
-  
