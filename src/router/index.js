@@ -126,11 +126,17 @@ const routes = [
     beforeEnter: checkAdmin,
   },
   {
-  path: "/admin/slot-dashboard",
-  component: () => import("../components/Admin/SlotDashboard/index.vue"),
-  meta: { layout: "admin", title: "Dashboard Slot" },
-  beforeEnter: checkAdmin,
-},
+    path: "/admin/slot-dashboard",
+    component: () => import("../components/Admin/SlotDashboard/index.vue"),
+    meta: { layout: "admin", title: "Dashboard Slot" },
+    beforeEnter: checkAdmin,
+  },
+  {
+    path: "/admin/achievements",
+    component: () => import("../components/Admin/AchievementManagement/index.vue"),
+    meta: { layout: "admin", title: "Quản lý huy hiệu" },
+    beforeEnter: checkAdmin,
+  },
   {
     path: "/admin/appoint-control",
     component: () => import("../components/Admin/AppointControl/index.vue"),
@@ -309,6 +315,12 @@ const routes = [
     component: () => import("../components/Client/blooddonationhistory/index.vue"),
     meta: { layout: "client", title: "Lịch sử hiến máu" },
     beforeEnter: checkDonor,
+  },
+  {
+    path: "/Hospital/leaderboard",
+    component: () => import("../components/Hospital/Leaderboard/index.vue"),
+    meta: { layout: "Hospital", title: "Bảng xếp hạng" },
+    beforeEnter: checkDoctor,
   },
   {
     path: "/account-security",
