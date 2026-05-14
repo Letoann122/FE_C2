@@ -196,12 +196,12 @@ const routes = [
     meta: { layout: "Hospital", title: "Quản lý đặt lịch" },
     beforeEnter: checkDoctor,
   },
-  {
-    path: "/Hospital/donation-complete",
-    component: () => import("../components/Hospital/DonationComplete/index.vue"),
-    meta: { layout: "Hospital", title: "Ghi nhận hiến máu" },
-    beforeEnter: checkDoctor,
-  },
+  // {
+  //   path: "/Hospital/donation-complete",
+  //   component: () => import("../components/Hospital/DonationComplete/index.vue"),
+  //   meta: { layout: "Hospital", title: "Ghi nhận hiến máu" },
+  //   beforeEnter: checkDoctor,
+  // },
   {
     path: "/Hospital/campaign-management",
     component: () => import("../components/Hospital/CampaignManagement/index.vue"),
@@ -251,6 +251,12 @@ const routes = [
     meta: { layout: "Hospital", title: "Quét mã check-in" },
     beforeEnter: checkDoctor,
   },
+  {
+  path: "/Hospital/emergency-ai",
+  component: () => import("../components/Hospital/EmergencyAI/index.vue"),
+  meta: { layout: "Hospital", title: "Đề xuất AI" },
+  beforeEnter: checkDoctor,
+},
   {
     path: "/Hospital/today-checked-in",
     component: () => import("../components/Hospital/TodayCheckedIn/index.vue"),
