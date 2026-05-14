@@ -1,68 +1,23 @@
 <template>
-  <div class="container py-5 my-appointments-page">
-    <div class="mb-4 border-bottom pb-3">
-      <h3 class="fw-bold text-danger">
-        <i class="bi bi-calendar-check me-2"></i>Lịch hẹn của tôi
-      </h3>
-      <p class="text-muted mb-0">
-        Theo dõi tất cả lịch hẹn hiến máu, xem chi tiết, thẻ check-in và trạng thái lịch hẹn.
-      </p>
-    </div>
-
-    <div class="row g-3 mb-4">
-      <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-4 stat-card">
-          <div class="card-body">
-            <div class="small text-muted">Tổng lịch hẹn</div>
-            <div class="display-6 fw-bold text-danger">{{ appointments.length }}</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-4 stat-card">
-          <div class="card-body">
-            <div class="small text-muted">Đang chờ duyệt</div>
-            <div class="display-6 fw-bold text-warning">
-              {{ countByStatus("REQUESTED") }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-4 stat-card">
-          <div class="card-body">
-            <div class="small text-muted">Đã duyệt</div>
-            <div class="display-6 fw-bold text-success">
-              {{ countByStatus("APPROVED") }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-4 stat-card">
-          <div class="card-body">
-            <div class="small text-muted">Hoàn thành</div>
-            <div class="display-6 fw-bold text-primary">
-              {{ countByStatus("COMPLETED") }}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
+  <div class="container py-4">
     <div class="card border-0 shadow-sm rounded-4">
       <div class="card-body p-4">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-          <h5 class="fw-bold mb-0">Danh sách lịch hẹn</h5>
+          <div>
+            <h4 class="fw-bold text-danger mb-1">
+              <i class="bi bi-calendar-heart me-2"></i>
+              Lịch hẹn của tôi
+            </h4>
+            <div class="text-muted small">
+              Theo dõi lịch hẹn hiến máu của bạn.
+            </div>
+          </div>
 
-          <select class="form-select" v-model="filterStatus" style="width: 210px">
+          <select v-model="filterStatus" class="form-select" style="max-width: 220px">
             <option value="">Tất cả trạng thái</option>
             <option value="REQUESTED">Chờ duyệt</option>
             <option value="APPROVED">Đã duyệt</option>
-            <option value="BOOKED">Đã đặt</option>
+            <option value="BOOKED">Đã đặt lịch</option>
             <option value="CHECKED_IN">Đã check-in</option>
             <option value="SCREENING">Đang sàng lọc</option>
             <option value="FAILED_SCREENING">Không đủ điều kiện</option>
@@ -105,22 +60,35 @@
                 </td>
 
                 <td>
-                  <div class="fw-semibold">{{ formatDate(a.scheduled_at) }}</div>
-                  <div class="small text-muted">{{ getTimeSlot(a) }}</div>
+                  <div class="fw-semibold">
+                    {{ formatDate(a.scheduled_at) }}
+                  </div>
+
+                  <div class="small text-muted">
+                    {{ getTimeSlot(a) }}
+                  </div>
+
                   <div v-if="a.slot" class="small text-danger">
                     Slot: {{ a.slot.current_count }}/{{ a.slot.slot_capacity }}
-                    <span v-if="a.slot.percent !== undefined">({{ a.slot.percent }}%)</span>
+                    <span v-if="a.slot.percent !== undefined">
+                      ({{ a.slot.percent }}%)
+                    </span>
                   </div>
                 </td>
 
                 <td>
-                  <div class="fw-semibold">{{ getSiteName(a) }}</div>
-                  <div class="small text-muted">{{ getSiteAddress(a) }}</div>
+                  <div class="fw-semibold">
+                    {{ getSiteName(a) }}
+                  </div>
+
+                  <div class="small text-muted">
+                    {{ getSiteAddress(a) }}
+                  </div>
                 </td>
 
                 <td>
-                  <span class="badge bg-light text-dark border">
-                    {{ a.campaign_id ? "Chiến dịch" : "Điểm cố định" }}
+                  <span class="badge" :class="appointmentTypeClass(a)">
+                    {{ appointmentTypeLabel(a) }}
                   </span>
                 </td>
 
@@ -132,16 +100,28 @@
 
                 <td class="text-end">
                   <div class="d-flex justify-content-end gap-2 flex-wrap">
-                    <button class="btn btn-sm btn-outline-secondary" @click="goDetail(a)">
+                    <button
+                      class="btn btn-sm btn-outline-secondary"
+                      @click="goDetail(a)"
+                    >
                       Xem chi tiết
                     </button>
 
-                    <button v-if="canShowQr(a)" class="btn btn-sm btn-danger" @click="goQrCheckin(a)">
-                      <i class="bi bi-qr-code me-1"></i>Mã QR
+                    <button
+                      v-if="canShowQr(a)"
+                      class="btn btn-sm btn-danger"
+                      @click="goQrCheckin(a)"
+                    >
+                      <i class="bi bi-qr-code me-1"></i>
+                      Mã QR
                     </button>
 
-                    <button v-if="canCancel(a)" class="btn btn-sm btn-outline-danger" @click="openCancelModal(a)"
-                      :disabled="isCancelling">
+                    <button
+                      v-if="canCancel(a)"
+                      class="btn btn-sm btn-outline-danger"
+                      @click="openCancelModal(a)"
+                      :disabled="isCancelling"
+                    >
                       Hủy
                     </button>
                   </div>
@@ -155,12 +135,19 @@
 
     <div class="mt-4 d-flex justify-content-end">
       <router-link to="/register-blooddonation" class="btn btn-danger">
-        <i class="bi bi-plus-circle me-1"></i>Đặt lịch mới
+        <i class="bi bi-plus-circle me-1"></i>
+        Đặt lịch mới
       </router-link>
     </div>
 
     <!-- CANCEL MODAL -->
-    <div class="modal fade" id="cancelAppointmentModal" tabindex="-1" aria-hidden="true" ref="cancelModalRef">
+    <div
+      class="modal fade"
+      id="cancelAppointmentModal"
+      tabindex="-1"
+      aria-hidden="true"
+      ref="cancelModalRef"
+    >
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 rounded-4">
           <div class="modal-header">
@@ -169,8 +156,13 @@
               Xác nhận hủy lịch hẹn
             </h5>
 
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
-              :disabled="isCancelling"></button>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+              :disabled="isCancelling"
+            ></button>
           </div>
 
           <div class="modal-body">
@@ -178,19 +170,30 @@
               Bạn có chắc chắn muốn hủy lịch hẹn này không?
             </p>
 
-            <div v-if="selectedCancelAppointment" class="alert alert-light border rounded-4 small mb-0">
+            <div
+              v-if="selectedCancelAppointment"
+              class="alert alert-light border rounded-4 small mb-0"
+            >
               <div>
                 <strong>Mã lịch:</strong>
                 {{ selectedCancelAppointment.appointment_code || `#${selectedCancelAppointment.id}` }}
               </div>
+
+              <div>
+                <strong>Loại:</strong>
+                {{ appointmentTypeLabel(selectedCancelAppointment) }}
+              </div>
+
               <div>
                 <strong>Ngày hẹn:</strong>
                 {{ formatDate(selectedCancelAppointment.scheduled_at) }}
               </div>
+
               <div>
                 <strong>Khung giờ:</strong>
                 {{ getTimeSlot(selectedCancelAppointment) }}
               </div>
+
               <div>
                 <strong>Địa điểm:</strong>
                 {{ getSiteName(selectedCancelAppointment) }}
@@ -199,13 +202,23 @@
           </div>
 
           <div class="modal-footer">
-            <button class="btn btn-secondary" data-bs-dismiss="modal" :disabled="isCancelling">
+            <button
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+              :disabled="isCancelling"
+            >
               Đóng
             </button>
 
-            <button class="btn btn-danger" @click="confirmCancelAppointment"
-              :disabled="isCancelling || !selectedCancelAppointment">
-              <span v-if="isCancelling" class="spinner-border spinner-border-sm me-1"></span>
+            <button
+              class="btn btn-danger"
+              @click="confirmCancelAppointment"
+              :disabled="isCancelling || !selectedCancelAppointment"
+            >
+              <span
+                v-if="isCancelling"
+                class="spinner-border spinner-border-sm me-1"
+              ></span>
               Xác nhận hủy
             </button>
           </div>
@@ -219,6 +232,7 @@
 import baseRequestClient from "../../../core/baseRequestClient";
 import socket from "../../../core/socket";
 import { createToaster } from "@meforma/vue-toaster";
+const toaster = createToaster({ position: "top-right" });
 
 import {
   getAppointmentStatusLabel,
@@ -244,7 +258,10 @@ export default {
   computed: {
     filteredAppointments() {
       if (!this.filterStatus) return this.appointments;
-      return this.appointments.filter((item) => item.status === this.filterStatus);
+
+      return this.appointments.filter(
+        (item) => item.status === this.filterStatus
+      );
     },
   },
 
@@ -335,21 +352,15 @@ export default {
     },
 
     openCancelModal(item) {
-      if (this.isCancelling) return;
-
       this.selectedCancelAppointment = item;
 
       this.$nextTick(() => {
-        if (!this.cancelModalInstance) {
-          this.initCancelModal();
-        }
-
         this.cancelModalInstance?.show();
       });
     },
 
     async confirmCancelAppointment() {
-      if (!this.selectedCancelAppointment || this.isCancelling) return;
+      if (!this.selectedCancelAppointment) return;
 
       this.isCancelling = true;
 
@@ -370,7 +381,9 @@ export default {
         }
       } catch (error) {
         console.error("confirmCancelAppointment error:", error);
-        toast.error("Không thể hủy lịch hẹn!");
+        toast.error(
+          error?.response?.data?.message || "Không thể hủy lịch hẹn!"
+        );
       } finally {
         this.isCancelling = false;
       }
@@ -397,6 +410,18 @@ export default {
       return ["REQUESTED", "APPROVED", "BOOKED"].includes(item.status);
     },
 
+    appointmentTypeLabel(item) {
+      if (item.emergency_request_id) return "Khẩn cấp";
+      if (item.campaign_id) return "Chiến dịch";
+      return "Điểm cố định";
+    },
+
+    appointmentTypeClass(item) {
+      if (item.emergency_request_id) return "bg-danger";
+      if (item.campaign_id) return "bg-warning text-dark";
+      return "bg-light text-dark border";
+    },
+
     countByStatus(status) {
       return this.appointments.filter((item) => item.status === status).length;
     },
@@ -411,26 +436,32 @@ export default {
 
     formatDate(date) {
       if (!date) return "Chưa có ngày";
+
       return new Date(date).toLocaleDateString("vi-VN");
     },
 
     getTimeSlot(item) {
       if (item.slot?.start_time && item.slot?.end_time) {
-        const start = String(item.slot.start_time).slice(0, 5);
-        const end = String(item.slot.end_time).slice(0, 5);
-
-        return `${start} - ${end}`;
+        return `${String(item.slot.start_time).slice(0, 5)} - ${String(
+          item.slot.end_time
+        ).slice(0, 5)}`;
       }
 
-      return item.time_slot || "Chưa có khung giờ";
+      if (!item.scheduled_at) return "Chưa có khung giờ";
+
+      const d = new Date(item.scheduled_at);
+      const hour = d.getHours();
+
+      if (hour < 12) return "Ca sáng";
+      return "Ca chiều";
     },
 
     getSiteName(item) {
       return (
         item.donation_site?.name ||
+        item.donation_site_name ||
+        item.site_name ||
         item.campaign?.title ||
-        item.campaign?.name ||
-        item.campaign?.location ||
         "Chưa có địa điểm"
       );
     },
@@ -438,8 +469,10 @@ export default {
     getSiteAddress(item) {
       return (
         item.donation_site?.address ||
-        item.campaign?.location ||
-        "Chưa có địa chỉ"
+        item.donation_site_address ||
+        item.site_address ||
+        item.location_display ||
+        ""
       );
     },
   },
@@ -447,7 +480,5 @@ export default {
 </script>
 
 <style scoped>
-.stat-card {
-  min-height: 120px;
-}
+/* Giữ Bootstrap mặc định */
 </style>
