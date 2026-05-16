@@ -37,7 +37,6 @@
             <option value="active">Đang hoạt động</option>
             <option value="upcoming">Sắp diễn ra</option>
             <option value="running">Đang diễn ra</option>
-            <option value="ended">Đã kết thúc</option>
           </select>
         </div>
       </div>
