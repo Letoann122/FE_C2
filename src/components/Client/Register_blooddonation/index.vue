@@ -19,17 +19,18 @@
             <div class="row g-3">
               <div class="col-lg-12">
                 <label class="form-label">Họ và tên *</label>
-                <input type="text" v-model.trim="form.full_name" class="form-control" />
+                <input type="text" v-model.trim="form.full_name" class="form-control bg-light" readonly />
+                <small class="text-muted">
+                  Họ tên được lấy từ hồ sơ, không thể chỉnh tại đây.
+                </small>
               </div>
 
               <div class="col-lg-6">
                 <label class="form-label">Nhóm máu *</label>
-                <select class="form-select" v-model="form.blood_group">
-                  <option disabled value="">Chọn nhóm máu</option>
-                  <option v-for="g in bloodGroups" :key="g" :value="g">
-                    {{ g }}
-                  </option>
-                </select>
+                <input type="text" v-model="form.blood_group" class="form-control bg-light" readonly />
+                <small class="text-muted">
+                  Nhóm máu được lấy từ hồ sơ, không thể chỉnh tại đây.
+                </small>
               </div>
 
               <div class="col-lg-6">
@@ -65,33 +66,37 @@
 
                 <div v-else class="row g-2">
                   <div class="col-md-6" v-for="slot in slots" :key="slot.id">
-                    <button
-                      type="button"
-                      class="slot-card w-100 text-start"
-                      :class="{
-                        active: String(form.appointment_slot_id) === String(slot.id),
-                        disabled: slot.is_full,
-                      }"
-                      :disabled="slot.is_full"
-                      @click="selectSlot(slot)"
-                    >
+                    <button type="button" class="slot-card w-100 text-start" :class="{
+                      active: String(form.appointment_slot_id) === String(slot.id),
+                      disabled: slot.is_full || isSlotExpired(slot),
+                    }" :disabled="slot.is_full || isSlotExpired(slot)" @click="selectSlot(slot)">
                       <div class="d-flex justify-content-between align-items-center mb-1">
                         <strong>{{ formatSlotTime(slot) }}</strong>
-                        <span class="badge" :class="slot.is_full ? 'bg-secondary' : 'bg-success'">
-                          {{ slot.is_full ? "Đã đầy" : "Còn chỗ" }}
+
+                        <span class="badge" :class="slot.is_full || isSlotExpired(slot)
+                            ? 'bg-secondary'
+                            : 'bg-success'
+                          ">
+                          {{
+                            isSlotExpired(slot)
+                              ? "Đã kết thúc"
+                              : slot.is_full
+                                ? "Đã đầy"
+                          : "Còn chỗ"
+                          }}
                         </span>
                       </div>
 
                       <div class="small text-muted mb-2">
                         {{ slot.current_count }} / {{ slot.slot_capacity }} người
-                        <span v-if="slot.percent !== undefined">({{ slot.percent }}%)</span>
+                        <span v-if="slot.percent !== undefined">
+                          ({{ slot.percent }}%)
+                        </span>
                       </div>
 
                       <div class="progress" style="height: 6px">
-                        <div
-                          class="progress-bar bg-danger"
-                          :style="{ width: `${Math.min(slot.percent || 0, 100)}%` }"
-                        ></div>
+                        <div class="progress-bar bg-danger" :style="{ width: `${Math.min(slot.percent || 0, 100)}%` }">
+                        </div>
                       </div>
                     </button>
                   </div>
@@ -139,24 +144,16 @@
               <small class="text-secondary d-block mb-1">{{ selectedSite.address }}</small>
               <small class="text-muted">({{ selectedSite.hospital_name }})</small>
             </div>
-            <span
-              class="badge rounded-pill px-3 py-2"
-              :class="selectedSite.is_active
-                ? 'bg-success-subtle text-success'
-                : 'bg-secondary-subtle text-muted'"
-            >
+            <span class="badge rounded-pill px-3 py-2" :class="selectedSite.is_active
+              ? 'bg-success-subtle text-success'
+              : 'bg-secondary-subtle text-muted'">
               {{ selectedSite.is_active ? "Đang hoạt động" : "Tạm ngưng" }}
             </span>
           </div>
 
           <div class="mt-3 rounded overflow-hidden shadow-sm">
-            <iframe
-              :src="mapEmbedUrl(selectedSite)"
-              width="100%"
-              height="220"
-              style="border: 0"
-              loading="lazy"
-            ></iframe>
+            <iframe :src="mapEmbedUrl(selectedSite)" width="100%" height="220" style="border: 0"
+              loading="lazy"></iframe>
           </div>
 
           <div class="d-flex gap-2 mt-3">
@@ -185,11 +182,8 @@
               Lịch hiến máu của bạn
             </h5>
 
-            <button
-              class="btn btn-sm btn-outline-secondary"
-              @click="loadMyAppointments"
-              :disabled="loadingAppointments"
-            >
+            <button class="btn btn-sm btn-outline-secondary" @click="loadMyAppointments"
+              :disabled="loadingAppointments">
               <span v-if="loadingAppointments" class="spinner-border spinner-border-sm me-1"></span>
               Tải lại
             </button>
@@ -227,16 +221,10 @@
                     </span>
                   </td>
                   <td class="text-end">
-                    <button
-                      v-if="['REQUESTED', 'APPROVED', 'BOOKED'].includes(a.status)"
-                      class="btn btn-sm btn-outline-danger"
-                      @click="cancelAppointment(a)"
-                      :disabled="submittingCancelId === a.id"
-                    >
-                      <span
-                        v-if="submittingCancelId === a.id"
-                        class="spinner-border spinner-border-sm me-1"
-                      ></span>
+                    <button v-if="['REQUESTED', 'APPROVED', 'BOOKED'].includes(a.status)"
+                      class="btn btn-sm btn-outline-danger" @click="cancelAppointment(a)"
+                      :disabled="submittingCancelId === a.id">
+                      <span v-if="submittingCancelId === a.id" class="spinner-border spinner-border-sm me-1"></span>
                       Huỷ
                     </button>
                   </td>
@@ -411,6 +399,21 @@ export default {
       return Number(String(value).replace(/[^\d]/g, ""));
     },
 
+    isSlotExpired(slot) {
+      if (!slot?.slot_date || !slot?.end_time) return false;
+
+      const dateKey = String(slot.slot_date).slice(0, 10);
+      const endTime = String(slot.end_time).slice(0, 8);
+
+      const endAt = new Date(`${dateKey}T${endTime}+07:00`);
+
+      return Date.now() > endAt.getTime();
+    },
+
+    async submitAppointment() {
+
+    },
+
     selectSlot(slot) {
       if (slot.is_full) {
         this.$toast?.error?.("Khung giờ này đã đủ số lượng người đăng ký!");
@@ -535,8 +538,6 @@ export default {
 
     submitBooking() {
       if (
-        !this.form.full_name ||
-        !this.form.blood_group ||
         !this.form.donation_site_id ||
         !this.form.date ||
         !this.form.appointment_slot_id ||

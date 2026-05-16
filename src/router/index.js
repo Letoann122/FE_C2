@@ -282,6 +282,12 @@ const routes = [
     },
     beforeEnter: checkDoctor,
   },
+  {
+    path: "/Hospital/leaderboard",
+    component: () => import("../components/Hospital/Leaderboard/index.vue"),
+    meta: { layout: "Hospital", title: "Bảng xếp hạng" },
+    beforeEnter: checkDoctor,
+  },
   // ===== DONOR =====
   {
     path: "/my-appointments",
@@ -322,12 +328,7 @@ const routes = [
     meta: { layout: "client", title: "Lịch sử hiến máu" },
     beforeEnter: checkDonor,
   },
-  {
-    path: "/Hospital/leaderboard",
-    component: () => import("../components/Hospital/Leaderboard/index.vue"),
-    meta: { layout: "Hospital", title: "Bảng xếp hạng" },
-    beforeEnter: checkDoctor,
-  },
+  
   {
     path: "/account-security",
     component: () => import("../components/Client/accountsecurity/index.vue"),
