@@ -32,9 +32,7 @@
             <div class="d-flex justify-content-between align-items-center">
               <div>
                 <div class="fw-semibold">Tình trạng slot realtime</div>
-                <div class="small text-muted">
-                  {{ slotLabel }}
-                </div>
+                <div class="small text-muted">{{ slotLabel }}</div>
               </div>
 
               <span class="badge" :class="slotBadgeClass(slotInfo.percent)">
@@ -68,34 +66,26 @@
 
               <div class="info-item">
                 <div class="label">Mã lịch hẹn</div>
-                <div class="value fw-bold">
-                  {{ appointment.appointment_code }}
-                </div>
+                <div class="value fw-bold">{{ appointment.appointment_code }}</div>
               </div>
 
               <div class="info-item">
                 <div class="label">Họ tên</div>
-                <div class="value">
-                  {{ appointment.donor?.full_name || "Không có dữ liệu" }}
-                </div>
+                <div class="value">{{ appointment.donor?.full_name || "Không có dữ liệu" }}</div>
               </div>
 
               <div class="info-item">
                 <div class="label">Số điện thoại</div>
-                <div class="value">
-                  {{ appointment.donor?.phone || "Không có dữ liệu" }}
-                </div>
+                <div class="value">{{ appointment.donor?.phone || "Không có dữ liệu" }}</div>
               </div>
 
               <div class="info-item">
                 <div class="label">Email</div>
-                <div class="value">
-                  {{ appointment.donor?.email || "Không có dữ liệu" }}
-                </div>
+                <div class="value">{{ appointment.donor?.email || "Không có dữ liệu" }}</div>
               </div>
 
               <div class="info-item">
-                <div class="label">Nhóm máu</div>
+                <div class="label">Nhóm máu hồ sơ</div>
                 <div class="value">
                   <span class="badge bg-danger fs-6">
                     {{ appointment.donor?.blood_group || "N/A" }}
@@ -105,23 +95,17 @@
 
               <div class="info-item">
                 <div class="label">Giới tính</div>
-                <div class="value">
-                  {{ appointment.donor?.gender || "Không có dữ liệu" }}
-                </div>
+                <div class="value">{{ appointment.donor?.gender || "Không có dữ liệu" }}</div>
               </div>
 
               <div class="info-item">
                 <div class="label">Địa chỉ</div>
-                <div class="value">
-                  {{ appointment.donor?.address || "Không có dữ liệu" }}
-                </div>
+                <div class="value">{{ appointment.donor?.address || "Không có dữ liệu" }}</div>
               </div>
 
               <div class="info-item">
                 <div class="label">Tiền sử bệnh</div>
-                <div class="value">
-                  {{ appointment.donor?.medical_history || "Không có dữ liệu" }}
-                </div>
+                <div class="value">{{ appointment.donor?.medical_history || "Không có dữ liệu" }}</div>
               </div>
 
               <div class="info-item">
@@ -133,9 +117,7 @@
 
               <div class="info-item">
                 <div class="label">Lịch hẹn</div>
-                <div class="value">
-                  {{ formatDateTime(appointment.scheduled_at) }}
-                </div>
+                <div class="value">{{ formatDateTime(appointment.scheduled_at) }}</div>
               </div>
             </div>
           </div>
@@ -163,8 +145,7 @@
 
               <div v-if="appointment.status === 'SCREENING'">
                 <div class="alert alert-info rounded-4">
-                  Bác sĩ nhập kết quả sàng lọc để quyết định người hiến có đủ
-                  điều kiện hay không.
+                  Bác sĩ nhập kết quả sàng lọc để quyết định người hiến có đủ điều kiện hay không.
                 </div>
 
                 <div class="row g-3">
@@ -215,7 +196,6 @@
                 <div class="row g-3">
                   <div class="col-md-6">
                     <label class="form-label fw-semibold">Lượng máu thực tế (ml)</label>
-
                     <select v-model="donation.volume_ml" class="form-select">
                       <option value="250">250ml</option>
                       <option value="350">350ml</option>
@@ -224,8 +204,16 @@
                   </div>
 
                   <div class="col-md-6">
-                    <label class="form-label fw-semibold">Nhóm máu</label>
-                    <input v-model="donation.blood_group" class="form-control" />
+                    <label class="form-label fw-semibold">Nhóm máu xác nhận</label>
+                    <select v-model="donation.blood_group" class="form-select">
+                      <option value="">-- Chọn nhóm máu --</option>
+                      <option v-for="group in bloodGroups" :key="group" :value="group">
+                        {{ group }}
+                      </option>
+                    </select>
+                    <small class="text-muted">
+                      Nếu khác nhóm máu hồ sơ, hệ thống sẽ cập nhật lại nhóm máu donor khi hoàn tất.
+                    </small>
                   </div>
 
                   <div class="col-12">
@@ -255,24 +243,19 @@
 
                     <div class="col-md-6">
                       <div class="small text-muted">Thể tích máu</div>
-                      <div class="fw-bold">
-                        {{ appointment.donation.volume_ml }}ml
-                      </div>
+                      <div class="fw-bold">{{ appointment.donation.volume_ml }}ml</div>
                     </div>
 
                     <div class="col-md-6">
                       <div class="small text-muted">Thời gian hoàn tất</div>
-                      <div class="fw-semibold">
-                        {{ formatDateTime(appointment.completed_at) }}
-                      </div>
+                      <div class="fw-semibold">{{ formatDateTime(appointment.completed_at) }}</div>
                     </div>
 
                     <div class="col-md-6">
                       <div class="small text-muted">Xác nhận bởi bác sĩ</div>
                       <div class="fw-semibold">
                         {{
-                          appointment.donation?.confirmed_by_doctor
-                            ?.full_name ||
+                          appointment.donation?.confirmed_by_doctor?.full_name ||
                           appointment.donation?.confirmed_by_doctor?.email ||
                           "Không có dữ liệu"
                         }}
@@ -330,6 +313,8 @@ export default {
       errorMessage: "",
       slotInfo: null,
 
+      bloodGroups: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
+
       screening: {
         blood_pressure: "",
         heart_rate: "",
@@ -369,9 +354,7 @@ export default {
 
       if (!slot) return "";
 
-      if (slot.current_count === undefined || slot.slot_capacity === undefined) {
-        return "";
-      }
+      if (slot.current_count === undefined || slot.slot_capacity === undefined) return "";
 
       return `${slot.current_count}/${slot.slot_capacity} (${slot.percent || 0}%)`;
     },
@@ -394,6 +377,9 @@ export default {
       if (this.appointmentId) {
         socket.emit("join_appointment", this.appointmentId);
       }
+
+      socket.off("appointment_updated", this.handleAppointmentRealtime);
+      socket.off("slot_capacity_updated", this.handleSlotRealtime);
 
       socket.on("appointment_updated", this.handleAppointmentRealtime);
       socket.on("slot_capacity_updated", this.handleSlotRealtime);
@@ -426,22 +412,16 @@ export default {
       this.errorMessage = "";
 
       try {
-        const res = await baseRequestDoctor.get(
-          "/doctor/donation-process/detail",
-          {
-            params: {
-              appointment_id: this.appointmentId,
-            },
-          }
-        );
+        const res = await baseRequestDoctor.get("/doctor/donation-process/detail", {
+          params: {
+            appointment_id: this.appointmentId,
+          },
+        });
 
         if (res.data.status) {
           this.appointment = res.data.data;
 
-          this.slotInfo =
-            this.appointment?.slot ||
-            this.appointment?.slot_info ||
-            null;
+          this.slotInfo = this.appointment?.slot || this.appointment?.slot_info || null;
 
           const slotId =
             this.slotInfo?.id ||
@@ -452,8 +432,10 @@ export default {
             socket.emit("join_slot", slotId);
           }
 
-          this.donation.blood_group =
-            this.appointment?.donor?.blood_group || "";
+          this.donation.volume_ml =
+            String(this.appointment?.preferred_volume_ml || this.donation.volume_ml || "350");
+
+          this.donation.blood_group = this.appointment?.donor?.blood_group || "";
         } else {
           this.errorMessage = res.data.message || "Không tải được dữ liệu!";
         }
@@ -470,12 +452,9 @@ export default {
       this.clearMessage();
 
       try {
-        const res = await baseRequestDoctor.post(
-          "/doctor/donation-process/start-screening",
-          {
-            appointment_id: this.appointment.appointment_id,
-          }
-        );
+        const res = await baseRequestDoctor.post("/doctor/donation-process/start-screening", {
+          appointment_id: this.appointment.appointment_id,
+        });
 
         if (res.data.status) {
           this.successMessage = res.data.message;
@@ -496,14 +475,10 @@ export default {
       this.clearMessage();
 
       try {
-        const res = await baseRequestDoctor.post(
-          "/doctor/donation-process/fail-screening",
-          {
-            appointment_id: this.appointment.appointment_id,
-            reason:
-              this.screening.screening_note || "Không đủ điều kiện hiến máu",
-          }
-        );
+        const res = await baseRequestDoctor.post("/doctor/donation-process/fail-screening", {
+          appointment_id: this.appointment.appointment_id,
+          reason: this.screening.screening_note || "Không đủ điều kiện hiến máu",
+        });
 
         if (res.data.status) {
           this.successMessage = res.data.message;
@@ -513,8 +488,7 @@ export default {
         }
       } catch (error) {
         this.errorMessage =
-          error.response?.data?.message ||
-          "Lỗi khi cập nhật không đạt sàng lọc!";
+          error.response?.data?.message || "Lỗi khi cập nhật không đạt sàng lọc!";
       } finally {
         this.processing = false;
       }
@@ -525,13 +499,10 @@ export default {
       this.clearMessage();
 
       try {
-        const res = await baseRequestDoctor.post(
-          "/doctor/donation-process/start-donation",
-          {
-            appointment_id: this.appointment.appointment_id,
-            ...this.screening,
-          }
-        );
+        const res = await baseRequestDoctor.post("/doctor/donation-process/start-donation", {
+          appointment_id: this.appointment.appointment_id,
+          ...this.screening,
+        });
 
         if (res.data.status) {
           this.successMessage = res.data.message;
@@ -548,17 +519,21 @@ export default {
     },
 
     async completeDonation() {
+      if (!this.donation.blood_group) {
+        this.errorMessage = "Vui lòng chọn nhóm máu xác nhận!";
+        return;
+      }
+
       this.processing = true;
       this.clearMessage();
 
       try {
-        const res = await baseRequestDoctor.post(
-          "/doctor/donation-process/complete",
-          {
-            appointment_id: this.appointment.appointment_id,
-            ...this.donation,
-          }
-        );
+        const res = await baseRequestDoctor.post("/doctor/donation-process/complete", {
+          appointment_id: this.appointment.appointment_id,
+          volume_ml: this.donation.volume_ml,
+          blood_group: this.donation.blood_group,
+          notes: this.donation.notes,
+        });
 
         if (res.data.status) {
           this.successMessage = res.data.message;
@@ -631,25 +606,26 @@ export default {
 }
 
 .info-item .label {
-  font-size: 13px;
   color: #6c757d;
+  font-size: 13px;
   margin-bottom: 4px;
 }
 
 .info-item .value {
-  font-weight: 500;
+  font-weight: 600;
+  color: #212529;
+}
+
+.slot-process-box {
+  border: 1px solid #eee;
+  background: #fafafa;
+  border-radius: 14px;
+  padding: 14px;
 }
 
 .note-pre {
   white-space: pre-wrap;
   font-family: inherit;
   font-size: 14px;
-}
-
-.slot-process-box {
-  padding: 14px 18px;
-  border-radius: 16px;
-  background: #fff5f5;
-  border: 1px solid #f1c2c2;
 }
 </style>
