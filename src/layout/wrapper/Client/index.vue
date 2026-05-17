@@ -11,12 +11,17 @@
     </main>
 
     <BotSBD />
+
+    <!-- CHATBOT -->
+    <Chatbot />
   </div>
 </template>
 
 <script>
 import TopSBD from "../../components/Client/Header.vue";
 import BotSBD from "../../components/Client/Footer.vue";
+
+import Chatbot from "../../../components/Client/Chatbot/index.vue";
 
 import EmergencyAlert from "../../../components/Client/EmergencyAlert/index.vue";
 import EmergencyRequestPopup from "../../../components/Client/EmergencyRequestPopup/index.vue";
@@ -30,6 +35,9 @@ export default {
   components: {
     TopSBD,
     BotSBD,
+
+    Chatbot,
+
     EmergencyAlert,
     EmergencyRequestPopup,
     LocationPermission,
