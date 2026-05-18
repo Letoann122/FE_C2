@@ -476,7 +476,9 @@ export default {
             );
           }
         })
-        .catch(() => this.$toast?.error?.("Lỗi server!"));
+        .catch((error) => {
+          console.error("confirmEdit error:", error);
+        });
     },
 
     confirmClose() {
@@ -493,7 +495,9 @@ export default {
             );
           }
         })
-        .catch(() => this.$toast?.error?.("Lỗi server!"));
+        .catch((error) => {
+          console.error("confirmClose error:", error);
+        });
     },
 
     formatRange(s, e) {

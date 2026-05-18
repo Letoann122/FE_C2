@@ -10,7 +10,7 @@ import Hospital from './layout/wrapper/Hospital/index.vue'
 import "../src/assets/css/bootstrap.min.css"
 import "../src/assets/js/bootstrap.bundle.min.js"
 import Toaster from '@meforma/vue-toaster'
-
+import "@fortawesome/fontawesome-free/css/all.min.css";
 
 const app = createApp(App)
 app.use(Toaster, { position: 'top-right' })

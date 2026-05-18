@@ -1,10 +1,16 @@
 <template>
   <section class="position-relative text-center d-flex align-items-center justify-content-center">
-    <img src="../../../assets/img/banner2.jpg" alt="Banner hiến máu" class="w-100"
-      style="height: 500px; opacity: 0.5" />
+    <img
+      src="../../../assets/img/banner2.jpg"
+      alt="Banner hiến máu"
+      class="w-100"
+      style="height: 500px; opacity: 0.5"
+    />
     <div class="position-absolute">
       <h2 class="fw-bold display-5">Tin tức & Chiến dịch Hiến Máu</h2>
-      <p class="text-dark fw-semibold">Cập nhật nhanh các hoạt động hiến máu, sự kiện và thông báo quan trọng</p>
+      <p class="text-dark fw-semibold">
+        Cập nhật nhanh các hoạt động hiến máu, sự kiện và thông báo quan trọng
+      </p>
     </div>
   </section>
 
@@ -18,6 +24,7 @@
             <label class="form-label">Từ ngày</label>
             <input type="date" class="form-control" v-model="dateStart" />
           </div>
+
           <div class="mb-3">
             <label class="form-label">Đến ngày</label>
             <input type="date" class="form-control" v-model="dateEnd" />
@@ -26,6 +33,7 @@
           <button class="btn btn-danger w-100 mt-2" @click="fetchNews(1)">
             <i class="bi bi-funnel me-1"></i> Lọc tin
           </button>
+
           <button class="btn btn-outline-secondary w-100 mt-2" @click="clearFilter">
             <i class="bi bi-x-circle me-1"></i> Xóa lọc
           </button>
@@ -33,6 +41,7 @@
           <hr />
 
           <h6 class="fw-bold mb-2">Lọc chiến dịch</h6>
+
           <select class="form-select" v-model="campaignStatus" @change="fetchCampaigns">
             <option value="active">Đang hoạt động</option>
             <option value="upcoming">Sắp diễn ra</option>
@@ -53,15 +62,30 @@
           <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
             <div v-for="(news, index) in newsList" :key="index">
               <div class="card h-100 shadow-sm">
-                <img :src="news.image_url || defaultImage" alt="news" class="card-img-top"
-                  style="height: 160px; object-fit: cover" />
+                <img
+                  :src="news.image_url || defaultImage"
+                  alt="news"
+                  class="card-img-top"
+                  style="height: 160px; object-fit: cover"
+                />
+
                 <div class="card-body d-flex flex-column">
-                  <h6 class="fw-bold text-truncate" :title="news.title">{{ news.title }}</h6>
-                  <small class="text-muted mb-2">{{ formatDate(news.published_date) }}</small>
+                  <h6 class="fw-bold text-truncate" :title="news.title">
+                    {{ news.title }}
+                  </h6>
+
+                  <small class="text-muted mb-2">
+                    {{ formatDate(news.published_date) }}
+                  </small>
+
                   <p class="card-text flex-grow-1 text-secondary small mb-3">
                     {{ truncate(news.content, 80) }}
                   </p>
-                  <router-link :to="`/news/${news.id}`" class="btn btn-outline-danger btn-sm mt-auto align-self-end">
+
+                  <router-link
+                    :to="`/news/${news.id}`"
+                    class="btn btn-outline-danger btn-sm mt-auto align-self-end"
+                  >
                     Xem chi tiết
                   </router-link>
                 </div>
@@ -77,13 +101,34 @@
           <nav class="mt-4" v-if="totalPages > 1">
             <ul class="pagination justify-content-center mb-0">
               <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                <a class="page-link" href="#" @click.prevent="fetchNews(currentPage - 1)">«</a>
+                <a
+                  class="page-link"
+                  href="#"
+                  @click.prevent="fetchNews(currentPage - 1)"
+                >
+                  «
+                </a>
               </li>
-              <li v-for="page in totalPages" :key="page" class="page-item" :class="{ active: currentPage === page }">
-                <a class="page-link" href="#" @click.prevent="fetchNews(page)">{{ page }}</a>
+
+              <li
+                v-for="page in totalPages"
+                :key="page"
+                class="page-item"
+                :class="{ active: currentPage === page }"
+              >
+                <a class="page-link" href="#" @click.prevent="fetchNews(page)">
+                  {{ page }}
+                </a>
               </li>
+
               <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                <a class="page-link" href="#" @click.prevent="fetchNews(currentPage + 1)">»</a>
+                <a
+                  class="page-link"
+                  href="#"
+                  @click.prevent="fetchNews(currentPage + 1)"
+                >
+                  »
+                </a>
               </li>
             </ul>
           </nav>
@@ -92,7 +137,10 @@
         <!-- CAMPAIGNS -->
         <div class="card border-0 bg-white mt-4 shadow-sm">
           <div class="card-header bg-danger text-white fw-bold d-flex align-items-center justify-content-between">
-            <div><i class="bi bi-heart-pulse me-2"></i>Chiến dịch hiến máu</div>
+            <div>
+              <i class="bi bi-heart-pulse me-2"></i>
+              Chiến dịch hiến máu
+            </div>
           </div>
 
           <div class="card-body">
@@ -107,14 +155,17 @@
             </div>
 
             <div v-else class="list-group">
-              <div v-for="(c, i) in campaigns" :key="c.id || i"
-                class="list-group-item d-flex justify-content-between align-items-center">
+              <div
+                v-for="(c, i) in campaigns"
+                :key="c.id || i"
+                class="list-group-item d-flex justify-content-between align-items-center"
+              >
                 <div>
                   <h6 class="fw-bold mb-1">{{ c.title }}</h6>
 
                   <div class="text-secondary">
                     <i class="bi bi-geo-alt-fill text-danger"></i>
-                    {{ c.location_display || c.location || "Chưa cập nhật địa điểm" }}
+                    {{ getCampaignLocation(c) }}
                   </div>
 
                   <div class="text-secondary">
@@ -128,8 +179,7 @@
                 </div>
 
                 <div class="d-flex gap-2">
-                  <router-link :to="`/campaigns/${c.id}`" class="btn btn-danger btn-sm"
-                    :class="{ disabled: c.status === 'ended' }">
+                  <router-link :to="`/campaigns/${c.id}`" class="btn btn-danger btn-sm">
                     Đăng ký tham gia
                   </router-link>
                 </div>
@@ -150,6 +200,7 @@
 <script>
 import axios from "axios";
 import baseRequestClient from "../../../core/baseRequestClient";
+
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 export default {
@@ -176,6 +227,7 @@ export default {
     async fetchNews(page = 1) {
       try {
         const params = { page, limit: 8 };
+
         if (this.dateStart) params.start = this.dateStart;
         if (this.dateEnd) params.end = this.dateEnd;
 
@@ -212,36 +264,61 @@ export default {
     async fetchCampaigns() {
       this.loadingCampaigns = true;
       this.campaignError = "";
+
       try {
         const res = await baseRequestClient.get("/public/campaigns", {
           params: { status: this.campaignStatus },
         });
 
         if (res.data?.status) {
-          this.campaigns = res.data.data || [];
+          this.campaigns = (res.data.data || [])
+            .filter((item) => ["upcoming", "running"].includes(item.status))
+            .sort((a, b) => {
+              const dateA = new Date(a.start_date || 0).getTime();
+              const dateB = new Date(b.start_date || 0).getTime();
+              return dateB - dateA;
+            });
         } else {
           this.campaigns = [];
           this.campaignError = res.data?.message || "Không thể tải chiến dịch!";
         }
       } catch (err) {
         this.campaigns = [];
-        this.campaignError = err.response?.data?.message || "Lỗi server khi tải chiến dịch!";
+        this.campaignError =
+          err.response?.data?.message || "Lỗi server khi tải chiến dịch!";
       } finally {
         this.loadingCampaigns = false;
       }
     },
 
+    getCampaignLocation(c) {
+      if (!c) return "Chưa cập nhật địa điểm";
+
+      if (c.locate_type === "donation_site") {
+        if (c.donation_site) {
+          const name = c.donation_site.name || "";
+          const address = c.donation_site.address || "";
+
+          if (name && address) return `${name} - ${address}`;
+          if (name) return name;
+          if (address) return address;
+        }
+
+        return "Chưa cập nhật địa điểm";
+      }
+
+      return c.location || "Chưa cập nhật địa điểm";
+    },
+
     statusLabel(s) {
       if (s === "upcoming") return "Sắp diễn ra";
       if (s === "running") return "Đang diễn ra";
-      if (s === "ended") return "Đã kết thúc";
       return s || "-";
     },
 
     statusBadgeClass(s) {
       if (s === "running") return "bg-danger";
       if (s === "upcoming") return "bg-warning text-dark";
-      if (s === "ended") return "bg-secondary";
       return "bg-light text-dark border";
     },
   },

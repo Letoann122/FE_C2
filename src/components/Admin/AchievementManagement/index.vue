@@ -5,16 +5,16 @@
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
           <div>
             <h4 class="fw-bold text-danger mb-1">
-              <i class="bi bi-award-fill me-2"></i>
+              <i class="fa-solid fa-award me-2"></i>
               Quản lý huy hiệu
             </h4>
             <p class="text-muted mb-0">
-              Quản lý hệ thống thành tích và gamification cho donor.
+              Quản lý hệ thống thành tích
             </p>
           </div>
 
           <button class="btn btn-danger" @click="openCreateModal">
-            <i class="bi bi-plus-circle me-1"></i>
+            <i class="fa-solid fa-circle-plus me-1"></i>
             Thêm huy hiệu
           </button>
         </div>
@@ -25,7 +25,7 @@
       <div class="card-body p-4">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
           <h5 class="fw-bold mb-0">
-            <i class="bi bi-table text-danger me-2"></i>
+            <i class="fa-solid fa-table text-danger me-2"></i>
             Danh sách huy hiệu
           </h5>
 
@@ -66,8 +66,11 @@
 
               <tr v-for="item in filteredAchievements" :key="item.id">
                 <td>
-                  <div class="achievement-icon" :class="`bg-${item.badge_color || 'danger'}`">
-                    <i :class="`bi ${item.icon || 'bi-award-fill'}`"></i>
+                  <div
+                    class="achievement-icon"
+                    :class="`bg-${item.badge_color || 'danger'}`"
+                  >
+                    <i :class="getIconClass(item.icon)"></i>
                   </div>
                 </td>
 
@@ -104,15 +107,24 @@
                 </td>
 
                 <td class="text-end">
-                  <button class="btn btn-sm btn-outline-primary me-2" @click="openEditModal(item)">
+                  <button
+                    class="btn btn-sm btn-outline-primary me-2"
+                    @click="openEditModal(item)"
+                  >
                     Sửa
                   </button>
 
-                  <button class="btn btn-sm btn-outline-warning me-2" @click="toggleAchievement(item)">
+                  <button
+                    class="btn btn-sm btn-outline-warning me-2"
+                    @click="toggleAchievement(item)"
+                  >
                     {{ Number(item.is_active) === 1 ? "Tắt" : "Bật" }}
                   </button>
 
-                  <button class="btn btn-sm btn-outline-danger" @click="deleteAchievement(item)">
+                  <button
+                    class="btn btn-sm btn-outline-danger"
+                    @click="openDeleteModal(item)"
+                  >
                     Xoá
                   </button>
                 </td>
@@ -127,8 +139,14 @@
       </div>
     </div>
 
-    <!-- MODAL -->
-    <div class="modal fade" id="achievementModal" tabindex="-1" aria-hidden="true" ref="modalRef">
+    <!-- CREATE / EDIT MODAL -->
+    <div
+      class="modal fade"
+      id="achievementModal"
+      tabindex="-1"
+      aria-hidden="true"
+      ref="modalRef"
+    >
       <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 rounded-4">
           <div class="modal-header">
@@ -136,7 +154,11 @@
               {{ isEdit ? "Cập nhật huy hiệu" : "Thêm huy hiệu" }}
             </h5>
 
-            <button class="btn-close" data-bs-dismiss="modal" :disabled="saving"></button>
+            <button
+              class="btn-close"
+              data-bs-dismiss="modal"
+              :disabled="saving"
+            ></button>
           </div>
 
           <div class="modal-body">
@@ -158,7 +180,11 @@
 
               <div class="col-md-12">
                 <label class="form-label">Mô tả</label>
-                <textarea v-model="form.description" class="form-control" rows="3"></textarea>
+                <textarea
+                  v-model="form.description"
+                  class="form-control"
+                  rows="3"
+                ></textarea>
               </div>
 
               <div class="col-md-4">
@@ -175,17 +201,34 @@
 
               <div class="col-md-4">
                 <label class="form-label">Mốc yêu cầu</label>
-                <input v-model.number="form.requirement_value" type="number" min="0" class="form-control" />
+                <input
+                  v-model.number="form.requirement_value"
+                  type="number"
+                  min="0"
+                  class="form-control"
+                />
               </div>
 
               <div class="col-md-4">
                 <label class="form-label">EXP thưởng</label>
-                <input v-model.number="form.exp_reward" type="number" min="0" class="form-control" />
+                <input
+                  v-model.number="form.exp_reward"
+                  type="number"
+                  min="0"
+                  class="form-control"
+                />
               </div>
 
               <div class="col-md-4">
-                <label class="form-label">Bootstrap icon</label>
-                <input v-model="form.icon" class="form-control" placeholder="bi-heart-fill" />
+                <label class="form-label">Font Awesome icon</label>
+                <input
+                  v-model="form.icon"
+                  class="form-control"
+                  placeholder="fa-solid fa-award"
+                />
+                <div class="form-text">
+                  Ví dụ: fa-solid fa-heart, fa-solid fa-book, fa-solid fa-trophy
+                </div>
               </div>
 
               <div class="col-md-4">
@@ -203,7 +246,11 @@
 
               <div class="col-md-4">
                 <label class="form-label">Thứ tự</label>
-                <input v-model.number="form.sort_order" type="number" class="form-control" />
+                <input
+                  v-model.number="form.sort_order"
+                  type="number"
+                  class="form-control"
+                />
               </div>
 
               <div class="col-md-12">
@@ -211,12 +258,17 @@
                   <div class="small text-muted mb-2">Xem trước</div>
 
                   <div class="d-flex align-items-center gap-3">
-                    <div class="achievement-icon" :class="`bg-${form.badge_color || 'danger'}`">
-                      <i :class="`bi ${form.icon || 'bi-award-fill'}`"></i>
+                    <div
+                      class="achievement-icon"
+                      :class="`bg-${form.badge_color || 'danger'}`"
+                    >
+                      <i :class="getIconClass(form.icon)"></i>
                     </div>
 
                     <div>
-                      <div class="fw-bold">{{ form.name || "Tên huy hiệu" }}</div>
+                      <div class="fw-bold">
+                        {{ form.name || "Tên huy hiệu" }}
+                      </div>
                       <div class="small text-muted">
                         {{ form.description || "Mô tả huy hiệu" }}
                       </div>
@@ -228,13 +280,106 @@
           </div>
 
           <div class="modal-footer">
-            <button class="btn btn-secondary" data-bs-dismiss="modal" :disabled="saving">
+            <button
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+              :disabled="saving"
+            >
               Đóng
             </button>
 
-            <button class="btn btn-danger" @click="saveAchievement" :disabled="saving">
-              <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
+            <button
+              class="btn btn-danger"
+              @click="saveAchievement"
+              :disabled="saving"
+            >
+              <span
+                v-if="saving"
+                class="spinner-border spinner-border-sm me-1"
+              ></span>
               Lưu
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DELETE MODAL -->
+    <div
+      class="modal fade"
+      id="deleteAchievementModal"
+      tabindex="-1"
+      aria-hidden="true"
+      ref="deleteModalRef"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4">
+          <div class="modal-header">
+            <h5 class="modal-title fw-bold text-danger">
+              <i class="fa-solid fa-triangle-exclamation me-2"></i>
+              Xác nhận xoá huy hiệu
+            </h5>
+
+            <button
+              class="btn-close"
+              data-bs-dismiss="modal"
+              :disabled="saving"
+            ></button>
+          </div>
+
+          <div class="modal-body">
+            <p class="mb-2">
+              Bạn có chắc chắn muốn xoá huy hiệu này không?
+            </p>
+
+            <div class="border rounded-4 p-3 bg-light" v-if="deleteTarget">
+              <div class="d-flex align-items-center gap-3">
+                <div
+                  class="achievement-icon"
+                  :class="`bg-${deleteTarget.badge_color || 'danger'}`"
+                >
+                  <i :class="getIconClass(deleteTarget.icon)"></i>
+                </div>
+
+                <div>
+                  <div class="fw-bold">
+                    {{ deleteTarget.name }}
+                  </div>
+                  <div class="small text-muted">
+                    Mã: {{ deleteTarget.code }}
+                  </div>
+                  <div class="small text-muted">
+                    {{ deleteTarget.description || "Không có mô tả" }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="alert alert-warning mt-3 mb-0">
+              Hành động này không thể hoàn tác.
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+              :disabled="saving"
+            >
+              Huỷ
+            </button>
+
+            <button
+              class="btn btn-danger"
+              @click="confirmDeleteAchievement"
+              :disabled="saving || !deleteTarget"
+            >
+              <span
+                v-if="saving"
+                class="spinner-border spinner-border-sm me-1"
+              ></span>
+              <i v-else class="fa-solid fa-trash me-1"></i>
+              Xoá huy hiệu
             </button>
           </div>
         </div>
@@ -257,6 +402,8 @@ export default {
       errorMessage: "",
       keyword: "",
       modalInstance: null,
+      deleteModalInstance: null,
+      deleteTarget: null,
       isEdit: false,
       selectedId: null,
       achievements: [],
@@ -290,6 +437,11 @@ export default {
       this.modalInstance.dispose();
       this.modalInstance = null;
     }
+
+    if (this.deleteModalInstance) {
+      this.deleteModalInstance.dispose();
+      this.deleteModalInstance = null;
+    }
   },
 
   methods: {
@@ -298,7 +450,7 @@ export default {
         code: "",
         name: "",
         description: "",
-        icon: "bi-award-fill",
+        icon: "fa-solid fa-award",
         badge_color: "danger",
         achievement_type: "donation_count",
         requirement_value: 1,
@@ -307,12 +459,49 @@ export default {
       };
     },
 
+    getIconClass(icon) {
+      const value = String(icon || "").trim();
+
+      if (!value) {
+        return "fa-solid fa-award";
+      }
+
+      const htmlClassMatch = value.match(/class=["']([^"']+)["']/);
+
+      if (htmlClassMatch && htmlClassMatch[1]) {
+        return htmlClassMatch[1];
+      }
+
+      const hasFontAwesomePrefix =
+        value.includes("fa-solid") ||
+        value.includes("fa-regular") ||
+        value.includes("fa-brands");
+
+      if (value.startsWith("fa-") && !hasFontAwesomePrefix) {
+        return `fa-solid ${value}`;
+      }
+
+      if (value.includes("bi-")) {
+        return "fa-solid fa-award";
+      }
+
+      return value;
+    },
+
     initModal() {
       this.$nextTick(() => {
         const modalEl = this.$refs.modalRef;
+        const deleteModalEl = this.$refs.deleteModalRef;
 
         if (window.bootstrap && modalEl) {
           this.modalInstance = new window.bootstrap.Modal(modalEl, {
+            backdrop: "static",
+            keyboard: false,
+          });
+        }
+
+        if (window.bootstrap && deleteModalEl) {
+          this.deleteModalInstance = new window.bootstrap.Modal(deleteModalEl, {
             backdrop: "static",
             keyboard: false,
           });
@@ -356,7 +545,7 @@ export default {
         code: item.code,
         name: item.name,
         description: item.description || "",
-        icon: item.icon || "bi-award-fill",
+        icon: item.icon || "fa-solid fa-award",
         badge_color: item.badge_color || "danger",
         achievement_type: item.achievement_type || "donation_count",
         requirement_value: Number(item.requirement_value || 0),
@@ -379,13 +568,18 @@ export default {
       try {
         let res;
 
+        const payload = {
+          ...this.form,
+          icon: this.getIconClass(this.form.icon),
+        };
+
         if (this.isEdit) {
           res = await baseRequestAdmin.put(
             `/admin/achievements/${this.selectedId}`,
-            this.form
+            payload
           );
         } else {
-          res = await baseRequestAdmin.post("/admin/achievements", this.form);
+          res = await baseRequestAdmin.post("/admin/achievements", payload);
         }
 
         if (res.data?.status) {
@@ -423,23 +617,36 @@ export default {
       }
     },
 
-    async deleteAchievement(item) {
-      if (!confirm(`Xoá huy hiệu "${item.name}"?`)) return;
+    openDeleteModal(item) {
+      this.deleteTarget = item;
+      this.deleteModalInstance?.show();
+    },
+
+    async confirmDeleteAchievement() {
+      if (!this.deleteTarget) return;
+
+      this.saving = true;
 
       try {
-        const res = await baseRequestAdmin.delete(`/admin/achievements/${item.id}`);
+        const res = await baseRequestAdmin.delete(
+          `/admin/achievements/${this.deleteTarget.id}`
+        );
 
         if (res.data?.status) {
           this.$toast?.success?.(res.data.message || "Đã xoá huy hiệu!");
+          this.deleteModalInstance?.hide();
+          this.deleteTarget = null;
           await this.loadAchievements();
         } else {
           this.$toast?.error?.(res.data?.message || "Không thể xoá!");
         }
       } catch (error) {
-        console.error("deleteAchievement error:", error);
+        console.error("confirmDeleteAchievement error:", error);
         this.$toast?.error?.(
           error?.response?.data?.message || "Không thể xoá huy hiệu!"
         );
+      } finally {
+        this.saving = false;
       }
     },
 
