@@ -45,20 +45,38 @@ export default {
 @import "../../../assets/css/icons.css";
 @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap");
 @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css");
-/* ✅ set bg giống client */
-.wrapper{
+
+.wrapper {
   background-color: #f5f6f7;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* ✅ theme rocker hay set trắng ở đây -> override lại */
-.page-wrapper,
-.page-content{
+/* Fix layout admin dùng menu ngang, không dùng sidebar trái */
+.page-wrapper {
+  flex: 1;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
   background-color: transparent !important;
 }
 
-/* đảm bảo phần content giãn đầy */
-.page-wrapper{ flex: 1; }
+.page-content {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+  background-color: transparent !important;
+}
+
+/* Nếu theme có container bên trong thì ép full luôn */
+.page-content > .container,
+.page-content > .container-fluid {
+  width: 100% !important;
+  max-width: 100% !important;
+}
 </style>

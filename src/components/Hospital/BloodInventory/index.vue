@@ -96,13 +96,13 @@
                         </span>
                       </td>
                       <td class="text-end">
-                        <button v-if="group.status === 'critical' || group.status === 'low'"
-                          class="btn btn-sm btn-danger me-2" @click="openEmergencyModal(group)"
-                          :disabled="creatingEmergency === group.blood_group">
-                          <span v-if="creatingEmergency === group.blood_group"
-                            class="spinner-border spinner-border-sm me-1"></span>
-                          Cảnh báo
-                        </button>
+                        <button v-if="group.status === 'critical'"
+  class="btn btn-sm btn-danger me-2" @click="openEmergencyModal(group)"
+  :disabled="creatingEmergency === group.blood_group">
+  <span v-if="creatingEmergency === group.blood_group"
+    class="spinner-border spinner-border-sm me-1"></span>
+  Cảnh báo
+</button>
 
                         <button class="btn btn-sm btn-outline-primary" @click="goGroup(group)">
                           Chi tiết
@@ -484,10 +484,10 @@ export default {
     },
 
     topRecommendations() {
-      return this.groups
-        .filter((g) => ["critical", "low", "expiring_risk", "overstock"].includes(g.status))
-        .slice(0, 5);
-    },
+  return this.groups
+    .filter((g) => ["critical", "expiring_risk", "overstock"].includes(g.status))
+    .slice(0, 5);
+},
 
     summaryCards() {
       return [
@@ -745,10 +745,7 @@ export default {
         group,
         required_volume_ml: 500,
         needed_in_hours: 24,
-        reason:
-          group.status === "critical"
-            ? `Kho máu nhóm ${group.blood_group} đang ở mức nguy cấp.`
-            : `Kho máu nhóm ${group.blood_group} đang thấp hơn ngưỡng an toàn.`,
+       reason: `Kho máu nhóm ${group.blood_group} đang ở mức nguy cấp.`,
       };
     },
 
@@ -837,14 +834,13 @@ export default {
     },
 
     statusBadgeClass(status) {
-      return {
-        critical: "bg-danger",
-        low: "bg-secondary",
-        normal: "bg-success",
-        overstock: "bg-info text-dark",
-        expiring_risk: "bg-warning text-dark",
-      }[status] || "bg-light text-dark border";
-    },
+  return {
+    critical: "bg-danger",
+    normal: "bg-success",
+    overstock: "bg-info text-dark",
+    expiring_risk: "bg-warning text-dark",
+  }[status] || "bg-light text-dark border";
+},
   },
 };
 </script>

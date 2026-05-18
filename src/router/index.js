@@ -125,18 +125,18 @@ const routes = [
     meta: { layout: "admin", title: "Tổng quát kho máu" },
     beforeEnter: checkAdmin,
   },
-  {
-    path: "/admin/blood-inventory/detail",
-    component: () => import("../components/Admin/BloodInventoryDetail/index.vue"),
-    meta: { layout: "admin", title: "Chi tiết kho máu" },
-    beforeEnter: checkAdmin,
-  },
-  {
-    path: "/admin/blood-inventory/history",
-    component: () => import("../components/Admin/BloodInventoryHistory/index.vue"),
-    meta: { layout: "admin", title: "Lịch sử kho máu" },
-    beforeEnter: checkAdmin,
-  },
+  // {
+  //   path: "/admin/blood-inventory/detail",
+  //   component: () => import("../components/Admin/BloodInventoryDetail/index.vue"),
+  //   meta: { layout: "admin", title: "Chi tiết kho máu" },
+  //   beforeEnter: checkAdmin,
+  // },
+  // {
+  //   path: "/admin/blood-inventory/history",
+  //   component: () => import("../components/Admin/BloodInventoryHistory/index.vue"),
+  //   meta: { layout: "admin", title: "Lịch sử kho máu" },
+  //   beforeEnter: checkAdmin,
+  // },
   {
     path: "/admin/blood-inventory/groups",
     redirect: "/admin/blood-inventory/detail",

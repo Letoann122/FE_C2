@@ -16,12 +16,23 @@
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
           <div>
             <h5 class="fw-bold mb-1">
-              <i class="fa-solid fa-clock text-danger me-2"></i>Quản lý sức chứa khung giờ
+              <i class="fa-solid fa-clock text-danger me-2"></i>
+              Quản lý sức chứa khung giờ
             </h5>
-            <div class="text-muted small">Mỗi ngày tại mỗi site có 2 slot riêng: sáng và chiều.</div>
+            <div class="text-muted small">
+              Mỗi ngày tại mỗi site có 2 slot riêng: sáng và chiều.
+            </div>
           </div>
-          <button class="btn btn-outline-secondary btn-sm" @click="loadSlotControl" :disabled="slotControl.loading">
-            <span v-if="slotControl.loading" class="spinner-border spinner-border-sm me-1"></span>
+
+          <button
+            class="btn btn-outline-secondary btn-sm"
+            @click="loadSlotControl"
+            :disabled="slotControl.loading"
+          >
+            <span
+              v-if="slotControl.loading"
+              class="spinner-border spinner-border-sm me-1"
+            ></span>
             Tải slot
           </button>
         </div>
@@ -31,7 +42,11 @@
             <label class="form-label small">Site</label>
             <select class="form-select" v-model="slotControl.donation_site_id">
               <option disabled value="">Chọn site</option>
-              <option v-for="site in sites" :key="site.id" :value="String(site.id)">
+              <option
+                v-for="site in sites"
+                :key="site.id"
+                :value="String(site.id)"
+              >
                 {{ site.name }}
               </option>
             </select>
@@ -39,11 +54,23 @@
 
           <div class="col-md-3">
             <label class="form-label small">Ngày</label>
-            <input type="date" class="form-control" v-model="slotControl.date" />
+            <input
+              type="date"
+              class="form-control"
+              v-model="slotControl.date"
+              :min="todayISO()"
+            />
+            <div class="form-text text-danger" v-if="isPastDate(slotControl.date)">
+              Không thể cập nhật slot của ngày đã qua.
+            </div>
           </div>
 
           <div class="col-md-2">
-            <button class="btn btn-danger w-100" @click="loadSlotControl" :disabled="slotControl.loading">
+            <button
+              class="btn btn-danger w-100"
+              @click="loadSlotControl"
+              :disabled="slotControl.loading"
+            >
               Xem slot
             </button>
           </div>
@@ -60,28 +87,53 @@
                 <th class="text-end">Thao tác</th>
               </tr>
             </thead>
+
             <tbody>
               <tr v-for="slot in slotControl.slots" :key="slot.id">
-                <td class="fw-semibold">{{ slot.time_slot_label }}</td>
-                <td>{{ slot.current_count }}</td>
-                <td>{{ slot.available_count }}</td>
+                <td class="fw-semibold">
+                  {{ slotLabel(slot) }}
+                </td>
+
+                <td>{{ slot.current_count || 0 }}</td>
+
+                <td>{{ getAvailableCount(slot) }}</td>
+
                 <td>
                   <input
                     type="number"
                     min="0"
                     class="form-control form-control-sm"
                     v-model.number="slot.slot_capacity"
+                    :disabled="isPastDate(slotControl.date)"
                   />
                 </td>
+
                 <td class="text-end">
-                  <button class="btn btn-sm btn-primary" @click="saveSlotCapacity(slot)" :disabled="slotControl.savingId === slot.id">
-                    <span v-if="slotControl.savingId === slot.id" class="spinner-border spinner-border-sm me-1"></span>
+                  <button
+                    class="btn btn-sm btn-primary"
+                    @click="saveSlotCapacity(slot)"
+                    :disabled="
+                      slotControl.savingId === slot.id ||
+                      isPastDate(slotControl.date)
+                    "
+                  >
+                    <span
+                      v-if="slotControl.savingId === slot.id"
+                      class="spinner-border spinner-border-sm me-1"
+                    ></span>
                     Lưu
                   </button>
                 </td>
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <div
+          v-else-if="slotControl.loaded && !slotControl.loading"
+          class="alert alert-light border mt-3 mb-0 text-muted"
+        >
+          Không có slot cho ngày và site đã chọn.
         </div>
       </div>
     </div>
@@ -91,15 +143,23 @@
       <div class="card-body">
         <div class="row g-3">
           <div class="col-md-2">
-            <label class="form-label small">Keyword</label>
-            <input class="form-control" v-model="filters.keyword" placeholder="Tên / mã / SĐT" />
+            <label class="form-label small">Tìm theo</label>
+            <input
+              class="form-control"
+              v-model="filters.keyword"
+              placeholder="Tên / mã / SĐT"
+            />
           </div>
 
           <div class="col-md-2">
             <label class="form-label small">Trạng thái</label>
             <select class="form-select" v-model="filters.status">
               <option value="">Tất cả</option>
-              <option v-for="(opt, i) in statusOptions" :key="i" :value="opt.value">
+              <option
+                v-for="(opt, i) in statusOptions"
+                :key="i"
+                :value="opt.value"
+              >
                 {{ opt.label }}
               </option>
             </select>
@@ -109,7 +169,11 @@
             <label class="form-label small">Site</label>
             <select class="form-select" v-model.number="filters.siteId">
               <option :value="0">Tất cả</option>
-              <option v-for="site in sites" :key="site.id" :value="site.id">
+              <option
+                v-for="site in sites"
+                :key="site.id"
+                :value="site.id"
+              >
                 {{ site.name }}
               </option>
             </select>
@@ -251,7 +315,9 @@
             </tr>
 
             <tr v-if="!filtered.length">
-              <td colspan="12" class="text-center text-muted py-3">Không có dữ liệu</td>
+              <td colspan="12" class="text-center text-muted py-3">
+                Không có dữ liệu
+              </td>
             </tr>
           </tbody>
         </table>
@@ -263,7 +329,11 @@
           </div>
 
           <div class="btn-group">
-            <button class="btn btn-outline-secondary btn-sm" :disabled="page === 1" @click="prevPage">
+            <button
+              class="btn btn-outline-secondary btn-sm"
+              :disabled="page === 1"
+              @click="prevPage"
+            >
               ‹
             </button>
 
@@ -277,7 +347,11 @@
               {{ p }}
             </button>
 
-            <button class="btn btn-outline-secondary btn-sm" :disabled="page === totalPages" @click="nextPage">
+            <button
+              class="btn btn-outline-secondary btn-sm"
+              :disabled="page === totalPages"
+              @click="nextPage"
+            >
               ›
             </button>
           </div>
@@ -291,7 +365,8 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title fw-bold">
-              <i class="fa-solid fa-circle-info me-2"></i> Chi tiết lịch hẹn
+              <i class="fa-solid fa-circle-info me-2"></i>
+              Chi tiết lịch hẹn
             </h5>
             <button class="btn-close" data-bs-dismiss="modal"></button>
           </div>
@@ -299,14 +374,38 @@
           <div class="modal-body">
             <table class="table table-bordered">
               <tbody>
-                <tr><th>Mã lịch:</th><td>{{ detail?.code || "—" }}</td></tr>
-                <tr><th>Donor:</th><td>{{ detail?.donor?.name || "—" }}</td></tr>
-                <tr><th>SĐT:</th><td>{{ detail?.donor?.phone || "—" }}</td></tr>
-                <tr><th>Email:</th><td>{{ detail?.donor?.email || "—" }}</td></tr>
-                <tr><th>Nhóm máu:</th><td>{{ detail?.donor?.blood || "—" }}</td></tr>
-                <tr><th>Site:</th><td>{{ detail?.site || "—" }}</td></tr>
-                <tr><th>Slot:</th><td>{{ detail?.slot || "—" }}</td></tr>
-                <tr><th>Ngày:</th><td>{{ detail?.date || "—" }}</td></tr>
+                <tr>
+                  <th>Mã lịch:</th>
+                  <td>{{ detail?.code || "—" }}</td>
+                </tr>
+                <tr>
+                  <th>Donor:</th>
+                  <td>{{ detail?.donor?.name || "—" }}</td>
+                </tr>
+                <tr>
+                  <th>SĐT:</th>
+                  <td>{{ detail?.donor?.phone || "—" }}</td>
+                </tr>
+                <tr>
+                  <th>Email:</th>
+                  <td>{{ detail?.donor?.email || "—" }}</td>
+                </tr>
+                <tr>
+                  <th>Nhóm máu:</th>
+                  <td>{{ detail?.donor?.blood || "—" }}</td>
+                </tr>
+                <tr>
+                  <th>Site:</th>
+                  <td>{{ detail?.site || "—" }}</td>
+                </tr>
+                <tr>
+                  <th>Slot:</th>
+                  <td>{{ detail?.slot || "—" }}</td>
+                </tr>
+                <tr>
+                  <th>Ngày:</th>
+                  <td>{{ detail?.date || "—" }}</td>
+                </tr>
 
                 <tr v-if="detail?.status === 'REQUESTED' || detail?.status === 'APPROVED'">
                   <th>Dự kiến (ml):</th>
@@ -333,14 +432,22 @@
                   <td>{{ statusLabel(detail?.status) }}</td>
                 </tr>
 
-                <tr><th>Bác sĩ duyệt:</th><td>{{ detail?.doctorName || "—" }}</td></tr>
-                <tr><th>Ghi chú:</th><td>{{ detail?.notes || "—" }}</td></tr>
+                <tr>
+                  <th>Bác sĩ duyệt:</th>
+                  <td>{{ detail?.doctorName || "—" }}</td>
+                </tr>
+                <tr>
+                  <th>Ghi chú:</th>
+                  <td>{{ detail?.notes || "—" }}</td>
+                </tr>
               </tbody>
             </table>
           </div>
 
           <div class="modal-footer">
-            <button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            <button class="btn btn-secondary" data-bs-dismiss="modal">
+              Đóng
+            </button>
           </div>
         </div>
       </div>
@@ -369,8 +476,12 @@
           </div>
 
           <div class="modal-footer">
-            <button class="btn btn-secondary" data-bs-dismiss="modal">Huỷ</button>
-            <button class="btn btn-danger fw-bold" @click="submitBulk">Xác nhận</button>
+            <button class="btn btn-secondary" data-bs-dismiss="modal">
+              Huỷ
+            </button>
+            <button class="btn btn-danger fw-bold" @click="submitBulk">
+              Xác nhận
+            </button>
           </div>
         </div>
       </div>
@@ -388,16 +499,30 @@ export default {
     return {
       sites: [],
       doctors: [],
-      slots: ["07:00","08:00","09:00","10:00","11:00","13:00","14:00","15:00","16:00","17:00"],
+      slots: [
+        "07:00 - 11:00",
+        "13:00 - 17:00",
+        "07:00",
+        "08:00",
+        "09:00",
+        "10:00",
+        "11:00",
+        "13:00",
+        "14:00",
+        "15:00",
+        "16:00",
+        "17:00",
+      ],
+
       slotControl: {
         donation_site_id: "",
-        date: new Date().toISOString().slice(0, 10),
+        date: this.todayISO(),
         slots: [],
         loading: false,
         savingId: null,
+        loaded: false,
       },
 
-      // ✅ dropdown dùng label tiếng Việt nhưng value vẫn là status code từ DB/API
       statusOptions: [
         { value: "REQUESTED", label: "Chờ Duyệt" },
         { value: "APPROVED", label: "Đã Duyệt" },
@@ -412,7 +537,7 @@ export default {
 
       filters: {
         keyword: "",
-        status: "",     // ✅ sẽ là REQUESTED/APPROVED...
+        status: "",
         siteId: 0,
         slot: "",
         fromDate: "",
@@ -429,6 +554,7 @@ export default {
   },
 
   mounted() {
+    this.slotControl.date = this.todayISO();
     this.loadData();
   },
 
@@ -464,7 +590,84 @@ export default {
   },
 
   methods: {
-    // ✅ map status code -> label tiếng Việt
+    todayISO() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    },
+
+    isPastDate(dateValue) {
+      if (!dateValue) return false;
+      return dateValue < this.todayISO();
+    },
+
+    slotLabel(slot) {
+      if (!slot) return "-";
+
+      if (slot.time_slot_label && slot.time_slot_label !== "-") {
+        return slot.time_slot_label;
+      }
+
+      const start =
+        slot.start_time ||
+        slot.startTime ||
+        slot.start ||
+        slot.from_time ||
+        slot.fromTime ||
+        "";
+
+      const end =
+        slot.end_time ||
+        slot.endTime ||
+        slot.end ||
+        slot.to_time ||
+        slot.toTime ||
+        "";
+
+      const startText = this.formatTime(start);
+      const endText = this.formatTime(end);
+
+      if (startText && endText) {
+        return `${startText} - ${endText}`;
+      }
+
+      if (startText) {
+        return startText;
+      }
+
+      if (slot.time_slot) return slot.time_slot;
+      if (slot.slot_time) return slot.slot_time;
+      if (slot.label) return slot.label;
+
+      return "-";
+    },
+
+    formatTime(value) {
+      if (!value) return "";
+
+      if (typeof value === "string") {
+        return value.slice(0, 5);
+      }
+
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
+
+      return date.toTimeString().slice(0, 5);
+    },
+
+    getAvailableCount(slot) {
+      const capacity = Number(slot?.slot_capacity || 0);
+      const current = Number(slot?.current_count || 0);
+
+      if (slot?.available_count !== undefined && slot?.available_count !== null) {
+        return slot.available_count;
+      }
+
+      return Math.max(capacity - current, 0);
+    },
+
     statusLabel(code) {
       const map = {
         REQUESTED: "Chờ Duyệt",
@@ -473,6 +676,7 @@ export default {
         CANCELLED: "Đã Huỷ",
         COMPLETED: "Hoàn Thành",
       };
+
       return map[code] || code || "—";
     },
 
@@ -484,10 +688,12 @@ export default {
             this.appointments = res.data.data || [];
             this.doctors = res.data.doctors || [];
             this.sites = res.data.sites || [];
+
             if (!this.slotControl.donation_site_id && this.sites.length) {
               this.slotControl.donation_site_id = String(this.sites[0].id);
               this.loadSlotControl();
             }
+
             this.applyFilter();
           } else {
             this.$toast.error(res.data.message);
@@ -502,7 +708,16 @@ export default {
         return;
       }
 
+      if (this.isPastDate(this.slotControl.date)) {
+        this.slotControl.slots = [];
+        this.slotControl.loaded = true;
+        this.$toast.error("Không thể xem hoặc cập nhật slot của ngày đã qua!");
+        return;
+      }
+
       this.slotControl.loading = true;
+      this.slotControl.loaded = false;
+
       baseRequestAdmin
         .get("/admin/appointment-slots", {
           params: {
@@ -514,22 +729,47 @@ export default {
           if (res.data?.status) {
             this.slotControl.slots = res.data.data || [];
           } else {
+            this.slotControl.slots = [];
             this.$toast.error(res.data?.message || "Không tải được slot!");
           }
         })
-        .catch(() => this.$toast.error("Không tải được slot!"))
+        .catch(() => {
+          this.slotControl.slots = [];
+          this.$toast.error("Không tải được slot!");
+        })
         .finally(() => {
           this.slotControl.loading = false;
+          this.slotControl.loaded = true;
         });
     },
 
     saveSlotCapacity(slot) {
       if (!slot) return;
 
+      if (this.isPastDate(this.slotControl.date)) {
+        this.$toast.error("Không thể cập nhật sức chứa cho ngày đã qua!");
+        return;
+      }
+
+      const capacity = Number(slot.slot_capacity);
+
+      if (Number.isNaN(capacity) || capacity < 0) {
+        this.$toast.error("Sức chứa không hợp lệ!");
+        return;
+      }
+
+      const currentCount = Number(slot.current_count || 0);
+
+      if (capacity < currentCount) {
+        this.$toast.error("Sức chứa không được nhỏ hơn số người đã đăng ký!");
+        return;
+      }
+
       this.slotControl.savingId = slot.id;
+
       baseRequestAdmin
         .put(`/admin/appointment-slots/${slot.id}`, {
-          slot_capacity: Number(slot.slot_capacity),
+          slot_capacity: capacity,
         })
         .then((res) => {
           if (res.data?.status) {
@@ -561,27 +801,53 @@ export default {
         );
       }
 
-      // ✅ filters.status là REQUESTED/APPROVED... nên match đúng với x.status
-      if (this.filters.status) arr = arr.filter((x) => x.status === this.filters.status);
+      if (this.filters.status) {
+        arr = arr.filter((x) => x.status === this.filters.status);
+      }
 
-      if (this.filters.siteId) arr = arr.filter((x) => x.siteId === this.filters.siteId);
+      if (this.filters.siteId) {
+        arr = arr.filter((x) => x.siteId === this.filters.siteId);
+      }
 
-      if (this.filters.slot) arr = arr.filter((x) => x.slot === this.filters.slot);
+      if (this.filters.slot) {
+        arr = arr.filter((x) => x.slot === this.filters.slot);
+      }
 
-      if (this.filters.fromDate) arr = arr.filter((x) => x.date >= this.filters.fromDate);
+      if (this.filters.fromDate) {
+        arr = arr.filter((x) => this.vnDateToISO(x.date) >= this.filters.fromDate);
+      }
 
-      if (this.filters.toDate) arr = arr.filter((x) => x.date <= this.filters.toDate);
+      if (this.filters.toDate) {
+        arr = arr.filter((x) => this.vnDateToISO(x.date) <= this.filters.toDate);
+      }
 
       this.filtered = arr;
       this.page = 1;
     },
 
+    vnDateToISO(value) {
+      if (!value) return "";
+
+      if (String(value).includes("-")) {
+        return value;
+      }
+
+      const parts = String(value).split("/");
+      if (parts.length !== 3) return "";
+
+      const [day, month, year] = parts;
+
+      return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    },
+
     goPage(p) {
       if (p >= 1 && p <= this.totalPages) this.page = p;
     },
+
     prevPage() {
       if (this.page > 1) this.page--;
     },
+
     nextPage() {
       if (this.page < this.totalPages) this.page++;
     },
@@ -589,9 +855,13 @@ export default {
     toggleOne(id) {
       this.selectedMap[id] = !this.selectedMap[id];
     },
+
     toggleAll(e) {
       const checked = e.target.checked;
-      for (const ap of this.paged) this.selectedMap[ap.id] = checked;
+
+      for (const ap of this.paged) {
+        this.selectedMap[ap.id] = checked;
+      }
     },
 
     openDetail(item) {
@@ -603,6 +873,7 @@ export default {
         this.$toast.info("Chọn lịch trước!");
         return;
       }
+
       this.action = type;
       this.bulkForm = { note: "" };
     },
@@ -611,9 +882,13 @@ export default {
       let url = "";
       const payload = { ids: this.selectedIds, note: this.bulkForm.note };
 
-      if (this.action === "approve") url = "/admin/appointments/bulk-approve";
-      else if (this.action === "cancel") url = "/admin/appointments/bulk-cancel";
-      else if (this.action === "notify") url = "/admin/appointments/bulk-notify";
+      if (this.action === "approve") {
+        url = "/admin/appointments/bulk-approve";
+      } else if (this.action === "cancel") {
+        url = "/admin/appointments/bulk-cancel";
+      } else if (this.action === "notify") {
+        url = "/admin/appointments/bulk-notify";
+      }
 
       baseRequestAdmin
         .post(url, payload)
@@ -648,6 +923,10 @@ export default {
 
 <style scoped>
 .table th {
-  width: 160px;
+  white-space: nowrap;
+}
+
+.table td {
+  vertical-align: middle;
 }
 </style>
