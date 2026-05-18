@@ -43,7 +43,6 @@
             </thead>
 
             <tbody>
-              <!-- ✅ render theo thứ tự bloodTypes -->
               <tr v-for="(row, index) in sortedInventorySummary" :key="row.blood_type">
                 <td>{{ index + 1 }}</td>
                 <th>{{ row.blood_type }}</th>
@@ -73,19 +72,28 @@
         <h5 class="fw-bold mb-0">
           <i class="bi bi-graph-up me-2"></i>Biểu đồ nhập - xuất máu
         </h5>
-        <div>
-          <button class="btn btn-sm" :class="range === 7 ? 'btn-danger' : 'btn-outline-secondary'" @click="setRange(7)">
-            7 ngày
-          </button>
-          <button
-            class="btn btn-sm ms-1"
-            :class="range === 30 ? 'btn-danger' : 'btn-outline-secondary'"
-            @click="setRange(30)"
-          >
-            30 ngày
+
+        <div class="d-flex gap-2 align-items-center">
+          <input
+            v-model="chartFilter.from"
+            type="date"
+            class="form-control form-control-sm"
+            style="width: 150px"
+          />
+
+          <input
+            v-model="chartFilter.to"
+            type="date"
+            class="form-control form-control-sm"
+            style="width: 150px"
+          />
+
+          <button class="btn btn-sm btn-danger" @click="filterByDate">
+            Lọc
           </button>
         </div>
       </div>
+
       <div class="card-body" style="min-height: 260px">
         <Line :data="chartData" :options="chartOptions" height="110" />
       </div>
@@ -397,9 +405,11 @@ export default {
   components: { Line },
   data() {
     return {
-      range: 7,
+      chartFilter: {
+        from: "",
+        to: "",
+      },
 
-      // ✅ thêm bloodTypes để “ép thứ tự” giống code 1
       bloodTypes: [
         { id: 1, name: "A+" },
         { id: 2, name: "A-" },
@@ -445,11 +455,11 @@ export default {
   },
 
   mounted() {
+    this.setDefaultChartDate();
     this.loadData();
   },
 
   computed: {
-    // ✅ sort theo bloodTypes giống code 1
     sortedInventorySummary() {
       const map = Object.create(null);
       (this.inventorySummary || []).forEach((row) => {
@@ -468,7 +478,6 @@ export default {
         );
       });
 
-      // nếu muốn: khi BE trả rỗng hoàn toàn thì return [] để hiện “Chưa có dữ liệu”
       const hasAny = (this.inventorySummary || []).length > 0;
       return hasAny ? result : [];
     },
@@ -539,8 +548,39 @@ export default {
       this.loadData();
     },
 
-    setRange(v) {
-      this.range = v;
+    setDefaultChartDate() {
+      const today = new Date();
+      const before = new Date();
+
+      before.setDate(before.getDate() - 6);
+
+      this.chartFilter.from = this.toInputDate(before);
+      this.chartFilter.to = this.toInputDate(today);
+    },
+
+    toInputDate(date) {
+      const d = new Date(date);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+
+      return `${yyyy}-${mm}-${dd}`;
+    },
+
+    filterChartByDate() {
+      if (!this.chartFilter.from || !this.chartFilter.to) {
+        this.$toast.error("Vui lòng chọn đầy đủ từ ngày và đến ngày!");
+        return;
+      }
+
+      const from = new Date(this.chartFilter.from);
+      const to = new Date(this.chartFilter.to);
+
+      if (from > to) {
+        this.$toast.error("Từ ngày không được lớn hơn đến ngày!");
+        return;
+      }
+
       this.loadData();
     },
 
@@ -553,8 +593,20 @@ export default {
 
     loadData() {
       const fallback = "Không thể tải dữ liệu kho máu!";
+      const params = new URLSearchParams();
+
+      params.set("chart_mode", "date");
+
+      if (this.chartFilter.from) {
+        params.set("from", this.chartFilter.from);
+      }
+
+      if (this.chartFilter.to) {
+        params.set("to", this.chartFilter.to);
+      }
+
       baseRequestAdmin
-        .get(`admin/blood-inventory/dashboard?range=${this.range}`)
+        .get(`admin/blood-inventory/dashboard?${params.toString()}`)
         .then((res) => {
           if (res.data.status) {
             const data = res.data.data || {};

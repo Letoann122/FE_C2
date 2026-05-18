@@ -135,6 +135,34 @@
                                 {{ formatDateRange(item.start_date, item.end_date) }}
                             </div>
 
+                            <div v-if="hasSlotInfo(item)" class="slot-mini-box mb-2">
+                                <div class="d-flex justify-content-between small">
+                                    <span>Ca sáng</span>
+                                    <strong>
+                                        {{ item.slots.morning.available_count }}/{{ item.slots.morning.slot_capacity }}
+                                    </strong>
+                                </div>
+                                <div class="progress mb-2" style="height: 5px">
+                                    <div
+                                        class="progress-bar bg-danger"
+                                        :style="{ width: `${Math.min(item.slots.morning.percent || 0, 100)}%` }"
+                                    ></div>
+                                </div>
+
+                                <div class="d-flex justify-content-between small">
+                                    <span>Ca chiều</span>
+                                    <strong>
+                                        {{ item.slots.afternoon.available_count }}/{{ item.slots.afternoon.slot_capacity }}
+                                    </strong>
+                                </div>
+                                <div class="progress" style="height: 5px">
+                                    <div
+                                        class="progress-bar bg-danger"
+                                        :style="{ width: `${Math.min(item.slots.afternoon.percent || 0, 100)}%` }"
+                                    ></div>
+                                </div>
+                            </div>
+
                             <div class="d-flex flex-wrap gap-1 mb-2">
                                 <span
                                     v-for="(badge, index) in item.badges"
@@ -248,6 +276,57 @@
                                 </div>
                             </div>
 
+                            <div v-if="hasSlotInfo(selectedLocation)" class="card border-0 bg-light rounded-4 mb-3">
+                                <div class="card-body p-3">
+                                    <div class="fw-semibold mb-2">
+                                        <i class="bi bi-clock-history text-danger me-1"></i>
+                                        Tình trạng khung giờ
+                                    </div>
+
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <div class="slot-detail-box">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Ca sáng</span>
+                                                    <strong>
+                                                        {{ selectedLocation.slots.morning.available_count }}/{{ selectedLocation.slots.morning.slot_capacity }}
+                                                    </strong>
+                                                </div>
+                                                <div class="small text-muted mb-2">
+                                                    07:00 - 11:00
+                                                </div>
+                                                <div class="progress" style="height: 6px">
+                                                    <div
+                                                        class="progress-bar bg-danger"
+                                                        :style="{ width: `${Math.min(selectedLocation.slots.morning.percent || 0, 100)}%` }"
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="slot-detail-box">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Ca chiều</span>
+                                                    <strong>
+                                                        {{ selectedLocation.slots.afternoon.available_count }}/{{ selectedLocation.slots.afternoon.slot_capacity }}
+                                                    </strong>
+                                                </div>
+                                                <div class="small text-muted mb-2">
+                                                    13:00 - 17:00
+                                                </div>
+                                                <div class="progress" style="height: 6px">
+                                                    <div
+                                                        class="progress-bar bg-danger"
+                                                        :style="{ width: `${Math.min(selectedLocation.slots.afternoon.percent || 0, 100)}%` }"
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div v-if="selectedLocation.type === 'campaign'" class="mb-3">
                                 <div class="small text-muted mb-1">Thời gian diễn ra</div>
                                 <div class="fw-medium">
@@ -295,6 +374,7 @@
 
 <script>
 import baseRequestClient from "../../../core/baseRequestClient";
+import socket from "../../../core/socket";
 
 export default {
     name: "FindNearbyDonationPage",
@@ -340,7 +420,6 @@ export default {
                 !Number.isNaN(Number(lat)) &&
                 !Number.isNaN(Number(lon));
 
-            // ÉP Google hiểu đây là tọa độ thật, không phải query text
             if (hasValidLatLon) {
                 return `https://maps.google.com/maps?q=loc:${Number(lat)},${Number(lon)}&z=16&output=embed`;
             }
@@ -375,9 +454,23 @@ export default {
 
     mounted() {
         this.initPage();
+        this.initSocket();
+    },
+
+    beforeUnmount() {
+        socket.off("slot_capacity_updated", this.handleSlotCapacityUpdated);
     },
 
     methods: {
+        initSocket() {
+            if (!socket.connected) socket.connect();
+            socket.on("slot_capacity_updated", this.handleSlotCapacityUpdated);
+        },
+
+        handleSlotCapacityUpdated() {
+            this.search();
+        },
+
         async initPage() {
             await this.tryGetCurrentLocationSilently();
             await this.search();
@@ -461,6 +554,13 @@ export default {
                     )
                 ) {
                     this.selectedLocation = this.displayedLocations[0] || null;
+                } else {
+                    this.selectedLocation =
+                        this.displayedLocations.find(
+                            (item) =>
+                                item.id === this.selectedLocation.id &&
+                                item.type === this.selectedLocation.type
+                        ) || this.selectedLocation;
                 }
             } catch (error) {
                 console.error("search nearby donations error:", error);
@@ -472,6 +572,53 @@ export default {
             } finally {
                 this.loading = false;
             }
+        },
+
+        emptySlots() {
+            return {
+                morning: {
+                    label: "Ca sáng",
+                    time_range: "07:00 - 11:00",
+                    current_count: 0,
+                    slot_capacity: 0,
+                    available_count: 0,
+                    percent: 0,
+                    is_full: false,
+                    slot_ids: [],
+                },
+                afternoon: {
+                    label: "Ca chiều",
+                    time_range: "13:00 - 17:00",
+                    current_count: 0,
+                    slot_capacity: 0,
+                    available_count: 0,
+                    percent: 0,
+                    is_full: false,
+                    slot_ids: [],
+                },
+            };
+        },
+
+        normalizeSlotPart(part) {
+            return {
+                label: part?.label || "",
+                time_range: part?.time_range || "",
+                current_count: Number(part?.current_count || 0),
+                slot_capacity: Number(part?.slot_capacity || 0),
+                available_count: Number(part?.available_count || 0),
+                percent: Number(part?.percent || 0),
+                is_full: Boolean(part?.is_full),
+                slot_ids: Array.isArray(part?.slot_ids) ? part.slot_ids : [],
+            };
+        },
+
+        normalizeSlots(slots) {
+            const fallback = this.emptySlots();
+
+            return {
+                morning: this.normalizeSlotPart(slots?.morning || fallback.morning),
+                afternoon: this.normalizeSlotPart(slots?.afternoon || fallback.afternoon),
+            };
         },
 
         normalizeItem(item) {
@@ -491,6 +638,20 @@ export default {
                     item.available_slots != null && !Number.isNaN(Number(item.available_slots))
                         ? Number(item.available_slots)
                         : 0,
+                total_capacity:
+                    item.total_capacity != null && !Number.isNaN(Number(item.total_capacity))
+                        ? Number(item.total_capacity)
+                        : 0,
+                current_count:
+                    item.current_count != null && !Number.isNaN(Number(item.current_count))
+                        ? Number(item.current_count)
+                        : 0,
+                percent:
+                    item.percent != null && !Number.isNaN(Number(item.percent))
+                        ? Number(item.percent)
+                        : 0,
+                is_full: Boolean(item.is_full),
+                slots: this.normalizeSlots(item.slots),
                 badges: Array.isArray(item.badges) ? item.badges : [],
                 hospital_name: item.hospital_name || null,
                 start_date: item.start_date || null,
@@ -498,6 +659,15 @@ export default {
                 is_emergency: Boolean(item.is_emergency),
                 donation_site_id: item.donation_site_id || null,
             };
+        },
+
+        hasSlotInfo(item) {
+            if (!item?.slots) return false;
+
+            return (
+                Number(item.slots.morning.slot_capacity || 0) > 0 ||
+                Number(item.slots.afternoon.slot_capacity || 0) > 0
+            );
         },
 
         selectLocation(item) {
@@ -635,5 +805,20 @@ export default {
 .custom-badge {
     font-size: 11px;
     font-weight: 500;
+}
+
+.slot-mini-box {
+    background: #fff7f7;
+    border: 1px solid #f1c2c2;
+    border-radius: 12px;
+    padding: 10px;
+}
+
+.slot-detail-box {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: 12px;
+    height: 100%;
 }
 </style>

@@ -25,7 +25,7 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <!-- NAV MENU -->
           <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-            <li class="nav-item mx-3">
+            <li class="nav-item mx-2">
               <router-link
                 class="nav-link"
                 to="/Hospital/dashboard"
@@ -35,17 +35,78 @@
               </router-link>
             </li>
 
-            <li class="nav-item mx-3">
+            <!-- AI Emergency -->
+            <li class="nav-item mx-2">
               <router-link
                 class="nav-link"
-                to="/Hospital/blood-inventory"
+                to="/Hospital/emergency-ai"
                 exact-active-class="active"
               >
-                Quản lý kho máu
+                AI Emergency
               </router-link>
             </li>
 
-            <li class="nav-item mx-3">
+            <!-- Dropdown: Lịch & Quy trình -->
+            <li class="nav-item dropdown mx-2">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                data-bs-toggle="dropdown"
+                :class="{ active: isDonationFlowActive }"
+                @click.prevent
+              >
+                Hiến máu
+              </a>
+
+              <ul class="dropdown-menu">
+                <li>
+                  <router-link class="dropdown-item" to="/Hospital/check-booking">
+                    Quản lý đặt lịch
+                  </router-link>
+                </li>
+
+                <li>
+                  <router-link class="dropdown-item" to="/Hospital/donation-process">
+                    Quy trình hiến máu
+                  </router-link>
+                </li>
+
+                <li>
+                  <router-link class="dropdown-item" to="/Hospital/blood-testing">
+                    Kiểm định máu
+                  </router-link>
+                </li>
+              </ul>
+            </li>
+
+            <!-- Dropdown: Kho máu -->
+            <li class="nav-item dropdown mx-2">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                data-bs-toggle="dropdown"
+                :class="{ active: isInventoryActive }"
+                @click.prevent
+              >
+                Kho máu
+              </a>
+
+              <ul class="dropdown-menu">
+                <li>
+                  <router-link class="dropdown-item" to="/Hospital/blood-inventory">
+                    Quản lý kho máu
+                  </router-link>
+                </li>
+
+                <li>
+                  <router-link class="dropdown-item" to="/Hospital/blood-inventory/log">
+                    Nhật ký kho máu
+                  </router-link>
+                </li>
+              </ul>
+            </li>
+
+            <li class="nav-item mx-2">
               <router-link
                 class="nav-link"
                 to="/Hospital/donor-management"
@@ -55,28 +116,8 @@
               </router-link>
             </li>
 
-            <li class="nav-item mx-3">
-              <router-link
-                class="nav-link"
-                to="/Hospital/check-booking"
-                exact-active-class="active"
-              >
-                Quản lý đặt lịch
-              </router-link>
-            </li>
-
-            <li class="nav-item mx-3">
-              <router-link
-                class="nav-link"
-                to="/Hospital/donation-complete"
-                exact-active-class="active"
-              >
-                Ghi nhận hiến máu
-              </router-link>
-            </li>
-
-            <!-- DROPDOWN: CHIẾN DỊCH -->
-            <li class="nav-item dropdown mx-3">
+            <!-- Dropdown: Chiến dịch -->
+            <li class="nav-item dropdown mx-2">
               <a
                 class="nav-link dropdown-toggle"
                 href="#"
@@ -86,12 +127,14 @@
               >
                 Chiến dịch
               </a>
+
               <ul class="dropdown-menu">
                 <li>
                   <router-link class="dropdown-item" to="/Hospital/campaign-management">
-                    Chiến dịch
+                    Quản lý chiến dịch
                   </router-link>
                 </li>
+
                 <li>
                   <router-link class="dropdown-item" to="/Hospital/news">
                     Tin tức
@@ -100,23 +143,40 @@
               </ul>
             </li>
 
-            <li class="nav-item mx-3">
-              <router-link
-                class="nav-link"
-                to="/Hospital/support"
-                exact-active-class="active"
-              >
-                Tư vấn & Hỗ trợ
-              </router-link>
-            </li>
-
-            <!-- ✅ DROPDOWN: BÁO CÁO -->
-            <li class="nav-item dropdown mx-3">
+            <!-- Dropdown: Hỗ trợ -->
+            <li class="nav-item dropdown mx-2">
               <a
                 class="nav-link dropdown-toggle"
                 href="#"
                 data-bs-toggle="dropdown"
-                :class="{ active: isReportActive || isBloodLogActive }"
+                :class="{ active: isSupportActive }"
+                @click.prevent
+              >
+                Hỗ trợ
+              </a>
+
+              <ul class="dropdown-menu">
+                <li>
+                  <router-link class="dropdown-item" to="/Hospital/support">
+                    Tư vấn & Hỗ trợ
+                  </router-link>
+                </li>
+
+                <li>
+                  <router-link class="dropdown-item" to="/Hospital/leaderboard">
+                    Bảng xếp hạng
+                  </router-link>
+                </li>
+              </ul>
+            </li>
+
+            <!-- Dropdown: Báo cáo -->
+            <li class="nav-item dropdown mx-2">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                data-bs-toggle="dropdown"
+                :class="{ active: isReportActive }"
                 @click.prevent
               >
                 Báo cáo
@@ -126,17 +186,6 @@
                 <li>
                   <router-link class="dropdown-item" to="/Hospital/report">
                     Báo cáo & Thống kê
-                  </router-link>
-                </li>
-
-                <li><hr class="dropdown-divider" /></li>
-
-                <li>
-                  <router-link
-                    class="dropdown-item"
-                    to="/Hospital/blood-inventory/log"
-                  >
-                    Nhật ký kho máu
                   </router-link>
                 </li>
               </ul>
@@ -158,12 +207,14 @@
             >
               Xin chào, {{ user.full_name }}
             </a>
+
             <ul class="dropdown-menu dropdown-menu-end">
               <li>
                 <router-link class="dropdown-item" to="/Hospital/profile">
                   Thông tin cá nhân
                 </router-link>
               </li>
+
               <li>
                 <a class="dropdown-item text-danger" @click="logout">
                   Đăng xuất
@@ -175,7 +226,6 @@
       </div>
     </nav>
 
-    <!-- Spacer khi navbar fixed -->
     <div v-show="isSticky" :style="{ height: navHeight + 'px' }"></div>
   </div>
 </template>
@@ -197,17 +247,35 @@ export default {
   },
 
   computed: {
+    isDonationFlowActive() {
+      return (
+        this.$route.path.startsWith("/Hospital/check-booking") ||
+        this.$route.path.startsWith("/Hospital/donation-process") ||
+        this.$route.path.startsWith("/Hospital/blood-testing")
+      );
+    },
+
+    isInventoryActive() {
+      return this.$route.path.startsWith("/Hospital/blood-inventory");
+    },
+
     isCampaignActive() {
       return this.$route.path.startsWith("/Hospital/campaign");
     },
+
     isNewsActive() {
       return this.$route.path.startsWith("/Hospital/news");
     },
+
+    isSupportActive() {
+      return (
+        this.$route.path.startsWith("/Hospital/support") ||
+        this.$route.path.startsWith("/Hospital/leaderboard")
+      );
+    },
+
     isReportActive() {
       return this.$route.path.startsWith("/Hospital/report");
-    },
-    isBloodLogActive() {
-      return this.$route.path.startsWith("/Hospital/blood-inventory/log");
     },
   },
 
@@ -228,9 +296,12 @@ export default {
 
       try {
         const res = await baseRequestDoctor.get("doctor/check-token");
+
         if (res.data.status) {
           this.isLoggedIn = true;
-          this.user = { full_name: res.data.ho_ten };
+          this.user = {
+            full_name: res.data.ho_ten,
+          };
         } else {
           localStorage.removeItem("token_doctor");
           this.isLoggedIn = false;
@@ -253,6 +324,7 @@ export default {
     handleSticky() {
       const nav = this.$refs.nav;
       if (!nav) return;
+
       this.navHeight = nav.offsetHeight;
       this.isSticky = window.scrollY > this.stickyOffset;
     },

@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import { showTawk, hideTawk } from "./core/tawk";
+import { prepareTawkHidden, hideTawk } from "./core/tawk";
 
 const default_layout = "blank";
 
@@ -48,8 +48,9 @@ export default {
         return;
       }
 
-      // guest hoặc donor => hiện
-      await showTawk();
+      // guest hoặc donor => load Tawk nhưng ẩn icon mặc định.
+      // Người dùng sẽ mở Tawk qua group button trong Smart Blood Bot.
+      await prepareTawkHidden();
     },
   },
 };

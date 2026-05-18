@@ -25,7 +25,7 @@ export function loadTawk() {
 
     s1.onload = () => resolve();
     s1.onerror = (e) => {
-      loadPromise = null; // để lần sau thử load lại
+      loadPromise = null;
       reject(e);
     };
 
@@ -35,16 +35,32 @@ export function loadTawk() {
   return loadPromise;
 }
 
-export async function showTawk() {
+export async function showTawk(options = {}) {
+  const { maximize = false } = options;
+
   try {
     await loadTawk();
-    // Đợi chút cho widget init iframe
+
     setTimeout(() => {
       window.Tawk_API?.showWidget?.();
-    }, 50);
+
+      if (maximize) {
+        window.Tawk_API?.maximize?.();
+      }
+    }, 100);
   } catch (e) {
     // nếu cần thì bạn console.log(e)
   }
+}
+
+export async function prepareTawkHidden() {
+  try {
+    await loadTawk();
+
+    setTimeout(() => {
+      window.Tawk_API?.hideWidget?.();
+    }, 100);
+  } catch (e) {}
 }
 
 export function hideTawk() {

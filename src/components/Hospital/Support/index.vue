@@ -6,12 +6,13 @@
     </div>
 
     <div class="row g-4">
-      <!-- LEFT: FILTER (GIỐNG CHECK-BOOKING) -->
+      <!-- FILTER -->
       <div class="col-lg-3">
         <div class="card shadow-sm border-0 rounded-4">
           <div class="card-body">
             <h5 class="mb-3 fw-bold text-danger">
-              <i class="bi bi-funnel me-2"></i> Lọc thông báo
+              <i class="bi bi-funnel me-2"></i>
+              Lọc thông báo
             </h5>
 
             <div class="mb-3">
@@ -29,14 +30,9 @@
               <select class="form-select" v-model="filters.recipient">
                 <option value="">Tất cả</option>
                 <option value="all">Tất cả donor</option>
-                <option value="A+">A+</option>
-                <option value="A-">A-</option>
-                <option value="B+">B+</option>
-                <option value="B-">B-</option>
-                <option value="AB+">AB+</option>
-                <option value="AB-">AB-</option>
-                <option value="O+">O+</option>
-                <option value="O-">O-</option>
+                <option v-for="b in bloodGroups" :key="b" :value="b">
+                  {{ b }}
+                </option>
               </select>
             </div>
 
@@ -50,20 +46,17 @@
             </div>
 
             <div class="mb-3">
-              <label class="form-label small">Ngày gửi từ</label>
-              <input type="date" class="form-control" v-model="filters.from_date" />
+              <label class="form-label small">Trạng thái</label>
+              <select class="form-select" v-model="filters.status">
+                <option value="">Tất cả</option>
+                <option value="active">Đang diễn ra</option>
+                <option value="ended">Kết thúc</option>
+              </select>
             </div>
 
-            <div class="mb-3">
-              <label class="form-label small">Ngày gửi đến</label>
-              <input type="date" class="form-control" v-model="filters.to_date" />
-            </div>
-
-            <div class="d-flex justify-content-end gap-2">
-              <button class="btn btn-danger mt-2" @click="applyFilter">
-                Lọc dữ liệu
-              </button>
-            </div>
+            <button class="btn btn-danger mt-2" @click="applyFilter">
+              Lọc dữ liệu
+            </button>
           </div>
         </div>
       </div>
@@ -93,14 +86,9 @@
                 <label class="form-label">Gửi đến nhóm máu</label>
                 <select class="form-select" v-model="form.recipient">
                   <option value="all">Tất cả donor</option>
-                  <option value="A+">A+</option>
-                  <option value="A-">A-</option>
-                  <option value="B+">B+</option>
-                  <option value="B-">B-</option>
-                  <option value="AB+">AB+</option>
-                  <option value="AB-">AB-</option>
-                  <option value="O+">O+</option>
-                  <option value="O-">O-</option>
+                  <option v-for="b in bloodGroups" :key="b" :value="b">
+                    {{ b }}
+                  </option>
                 </select>
               </div>
 
@@ -111,9 +99,25 @@
                   v-model="form.emergency"
                   id="emergencySwitch"
                 />
-                <label class="form-check-label text-danger fw-bold" for="emergencySwitch">
-                  Gửi thông báo khẩn cấp (Emergency Alert)
+                <label
+                  class="form-check-label text-danger fw-bold"
+                  for="emergencySwitch"
+                >
+                  Gửi thông báo khẩn cấp
                 </label>
+              </div>
+
+              <div v-if="form.emergency" class="mb-3">
+                <label class="form-label">Thời gian hết hạn cảnh báo</label>
+                <input
+                  type="datetime-local"
+                  class="form-control"
+                  v-model="form.expires_at"
+                />
+                <div class="form-text">
+                  Sau thời gian này, cảnh báo sẽ tự ẩn. Bạn vẫn có thể tắt thủ
+                  công trước hạn.
+                </div>
               </div>
 
               <div class="mb-3">
@@ -128,8 +132,7 @@
 
               <button class="btn btn-danger px-4" :disabled="sending">
                 <i class="bi bi-send-fill me-2"></i>
-                <span v-if="sending">Đang gửi...</span>
-                <span v-else>Gửi thông báo</span>
+                {{ sending ? "Đang gửi..." : "Gửi thông báo" }}
               </button>
             </form>
           </div>
@@ -137,12 +140,18 @@
 
         <!-- LIST -->
         <div class="card shadow-sm border-0 mb-4">
-          <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+          <div
+            class="card-header bg-white py-3 d-flex justify-content-between align-items-center"
+          >
             <h5 class="fw-bold mb-0">
-              <i class="bi bi-mailbox2 me-2"></i>Danh sách đã gửi
+              <i class="bi bi-mailbox2 me-2"></i>
+              Danh sách đã gửi
             </h5>
+
             <div class="text-muted small">
-              Hiển thị: <strong>{{ pageFrom }}-{{ pageTo }}</strong> / {{ totalItems }}
+              Hiển thị:
+              <strong>{{ pageFrom }}-{{ pageTo }}</strong> /
+              {{ totalItems }}
             </div>
           </div>
 
@@ -160,6 +169,7 @@
                     <th>Nhóm</th>
                     <th>Loại</th>
                     <th>Ngày gửi</th>
+                    <th>Trạng thái</th>
                     <th>SL gửi</th>
                     <th class="text-center">Xem</th>
                   </tr>
@@ -168,13 +178,36 @@
                 <tbody>
                   <tr v-for="(item, index) in paginatedList" :key="item.id">
                     <td>{{ rowNumber(index) }}</td>
-                    <td class="fw-semibold">{{ item.title }}</td>
-                    <td>{{ item.recipient === "all" ? "All" : item.recipient }}</td>
+
+                    <td class="fw-semibold">
+                      {{ item.title }}
+                    </td>
+
                     <td>
-                      <span v-if="item.emergency" class="text-danger">Khẩn cấp</span>
+                      {{ item.recipient === "all" ? "All" : item.recipient }}
+                    </td>
+
+                    <td>
+                      <span
+                        v-if="item.emergency"
+                        class="text-danger fw-semibold"
+                      >
+                        Khẩn cấp
+                      </span>
                       <span v-else>Thường</span>
                     </td>
-                    <td>{{ formatDate(item.created_at) }}</td>
+
+                    <td>{{ formatDateTime(item.created_at) }}</td>
+
+                    <td>
+                      <span
+                        class="badge"
+                        :class="notificationStatus(item).class"
+                      >
+                        {{ notificationStatus(item).text }}
+                      </span>
+                    </td>
+
                     <td>{{ item.sent_count }}</td>
 
                     <td class="text-center">
@@ -190,7 +223,7 @@
                   </tr>
 
                   <tr v-if="paginatedList.length === 0">
-                    <td colspan="7" class="text-center text-muted py-3">
+                    <td colspan="8" class="text-center text-muted py-3">
                       Không có thông báo phù hợp.
                     </td>
                   </tr>
@@ -198,11 +231,20 @@
               </table>
 
               <!-- PAGINATION -->
-              <div class="d-flex align-items-center justify-content-end px-2 py-3 border-top">
+              <div
+                class="d-flex align-items-center justify-content-end px-2 py-3 border-top"
+              >
                 <nav aria-label="Pagination">
                   <ul class="pagination mb-0">
-                    <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                      <button class="page-link" @click="goToPage(currentPage - 1)" :disabled="currentPage === 1">
+                    <li
+                      class="page-item"
+                      :class="{ disabled: currentPage === 1 }"
+                    >
+                      <button
+                        class="page-link"
+                        @click="goToPage(currentPage - 1)"
+                        :disabled="currentPage === 1"
+                      >
                         ‹
                       </button>
                     </li>
@@ -211,16 +253,31 @@
                       v-for="p in pageNumbers"
                       :key="String(p)"
                       class="page-item"
-                      :class="{ active: p === currentPage, disabled: p === '...' }"
+                      :class="{
+                        active: p === currentPage,
+                        disabled: p === '...',
+                      }"
                     >
-                      <button v-if="p !== '...'" class="page-link" @click="goToPage(p)">
+                      <button
+                        v-if="p !== '...'"
+                        class="page-link"
+                        @click="goToPage(p)"
+                      >
                         {{ p }}
                       </button>
+
                       <span v-else class="page-link">...</span>
                     </li>
 
-                    <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                      <button class="page-link" @click="goToPage(currentPage + 1)" :disabled="currentPage === totalPages">
+                    <li
+                      class="page-item"
+                      :class="{ disabled: currentPage === totalPages }"
+                    >
+                      <button
+                        class="page-link"
+                        @click="goToPage(currentPage + 1)"
+                        :disabled="currentPage === totalPages"
+                      >
                         ›
                       </button>
                     </li>
@@ -233,7 +290,12 @@
         </div>
 
         <!-- DETAIL MODAL -->
-        <div class="modal fade" id="notificationDetailModal" tabindex="-1" aria-hidden="true">
+        <div
+          class="modal fade"
+          id="notificationDetailModal"
+          tabindex="-1"
+          aria-hidden="true"
+        >
           <div class="modal-dialog modal-lg">
             <div class="modal-content">
               <div class="modal-header">
@@ -241,35 +303,169 @@
                   <i class="bi bi-mailbox2 text-danger me-2"></i>
                   Chi tiết thông báo
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+                <button
+                  type="button"
+                  class="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Close"
+                ></button>
               </div>
 
               <div class="modal-body" v-if="selectedNotification">
-                <p class="mb-1"><strong>Tiêu đề:</strong> {{ selectedNotification.title }}</p>
-                <p class="mb-1"><strong>Ngày gửi:</strong> {{ formatDate(selectedNotification.created_at) }}</p>
                 <p class="mb-1">
-                  <strong>Người nhận:</strong>
-                  {{ selectedNotification.recipient === "all" ? "Tất cả donor" : selectedNotification.recipient }}
-                </p>
-                <p class="mb-3">
-                  <strong>Loại:</strong>
-                  <span class="badge bg-danger ms-1" v-if="selectedNotification.emergency">Khẩn cấp</span>
-                  <span class="badge bg-secondary ms-1" v-else>Thông thường</span>
+                  <strong>Tiêu đề:</strong>
+                  {{ selectedNotification.title }}
                 </p>
 
-                <p class="mb-1"><strong>Nội dung:</strong></p>
-                <div class="border rounded p-3 bg-light" style="white-space: pre-line;">
+                <p class="mb-1">
+                  <strong>Ngày gửi:</strong>
+                  {{ formatDateTime(selectedNotification.created_at) }}
+                </p>
+
+                <p class="mb-1">
+                  <strong>Người nhận:</strong>
+                  {{
+                    selectedNotification.recipient === "all"
+                      ? "Tất cả donor"
+                      : selectedNotification.recipient
+                  }}
+                </p>
+
+                <p class="mb-1">
+                  <strong>Loại:</strong>
+                  <span
+                    class="badge bg-danger ms-1"
+                    v-if="selectedNotification.emergency"
+                  >
+                    Khẩn cấp
+                  </span>
+                  <span class="badge bg-secondary ms-1" v-else>
+                    Thông thường
+                  </span>
+                </p>
+
+                <p class="mb-1">
+                  <strong>Trạng thái:</strong>
+                  <span
+                    class="badge ms-1"
+                    :class="notificationStatus(selectedNotification).class"
+                  >
+                    {{ notificationStatus(selectedNotification).text }}
+                  </span>
+                </p>
+
+                <p v-if="selectedNotification.emergency" class="mb-3">
+                  <strong>Hết hạn:</strong>
+                  {{ formatDateTime(selectedNotification.expires_at) }}
+                </p>
+
+                <p class="mb-1">
+                  <strong>Nội dung:</strong>
+                </p>
+
+                <div
+                  class="border rounded p-3 bg-light"
+                  style="white-space: pre-line"
+                >
                   {{ selectedNotification.content }}
                 </div>
               </div>
 
               <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button
+                  v-if="
+                    selectedNotification &&
+                    selectedNotification.emergency &&
+                    notificationStatus(selectedNotification).text ===
+                      'Đang diễn ra'
+                  "
+                  type="button"
+                  class="btn btn-danger"
+                  :disabled="closing"
+                  @click="openCloseConfirmModal(selectedNotification)"
+                >
+                  Tắt cảnh báo
+                </button>
+
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  data-bs-dismiss="modal"
+                >
+                  Đóng
+                </button>
               </div>
             </div>
           </div>
         </div>
         <!-- /DETAIL MODAL -->
+
+        <!-- CLOSE CONFIRM MODAL -->
+        <div
+          class="modal fade"
+          id="closeEmergencyModal"
+          tabindex="-1"
+          aria-hidden="true"
+        >
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title text-danger">
+                  <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                  Xác nhận tắt cảnh báo
+                </h5>
+
+                <button
+                  type="button"
+                  class="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Close"
+                  :disabled="closing"
+                ></button>
+              </div>
+
+              <div class="modal-body">
+                <p class="mb-2">
+                  Bạn có chắc muốn tắt cảnh báo khẩn cấp:
+                  <strong class="text-danger">
+                    "{{ closeTarget?.title }}"
+                  </strong>
+                  ?
+                </p>
+
+                <div class="small text-muted">
+                  Banner donor sẽ biến mất realtime ngay lập tức.
+                </div>
+              </div>
+
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  data-bs-dismiss="modal"
+                  :disabled="closing"
+                >
+                  Hủy
+                </button>
+
+                <button
+                  type="button"
+                  class="btn btn-danger"
+                  :disabled="closing"
+                  @click="confirmCloseEmergency"
+                >
+                  <span
+                    v-if="closing"
+                    class="spinner-border spinner-border-sm me-2"
+                  ></span>
+                  Xác nhận tắt
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- /CLOSE CONFIRM MODAL -->
       </div>
     </div>
   </div>
@@ -277,34 +473,37 @@
 
 <script>
 import baseRequestDoctor from "../../../core/baseRequestDoctor";
+import { Modal } from "bootstrap";
 
 export default {
   data() {
     return {
       loaded: false,
       sending: false,
+      closing: false,
+
+      bloodGroups: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
 
       form: {
         title: "",
         recipient: "all",
         emergency: false,
         content: "",
+        expires_at: "",
       },
 
       notifications: [],
       selectedNotification: null,
+      closeTarget: null,
 
-      // FILTER giống check-booking
       filters: {
         title: "",
         recipient: "",
         type: "",
-        from_date: "",
-        to_date: "",
+        status: "",
       },
 
       filteredList: [],
-      lastParams: {},
 
       pageSize: 15,
       currentPage: 1,
@@ -340,16 +539,26 @@ export default {
       const total = this.totalPages;
       const cur = this.currentPage;
 
-      if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+      if (total <= 7) {
+        return Array.from({ length: total }, (_, i) => i + 1);
+      }
 
       const pages = new Set([1, 2, total - 1, total, cur - 1, cur, cur + 1]);
-      const arr = [...pages].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+
+      const arr = [...pages]
+        .filter((p) => p >= 1 && p <= total)
+        .sort((a, b) => a - b);
 
       const out = [];
+
       for (let i = 0; i < arr.length; i++) {
         out.push(arr[i]);
-        if (i < arr.length - 1 && arr[i + 1] - arr[i] > 1) out.push("...");
+
+        if (i < arr.length - 1 && arr[i + 1] - arr[i] > 1) {
+          out.push("...");
+        }
       }
+
       return out;
     },
   },
@@ -365,21 +574,54 @@ export default {
 
     goToPage(p) {
       if (p === "...") return;
+
       const page = Number(p);
+
       if (Number.isNaN(page)) return;
       if (page < 1 || page > this.totalPages) return;
+
       this.currentPage = page;
-      window.scrollTo({ top: 0, behavior: "smooth" });
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    },
+
+    notificationStatus(item) {
+      if (!item.emergency) {
+        return {
+          text: "Thông thường",
+          class: "bg-light text-dark border",
+        };
+      }
+
+      if (
+        item.is_active &&
+        item.expires_at &&
+        new Date(item.expires_at) > new Date()
+      ) {
+        return {
+          text: "Đang diễn ra",
+          class: "bg-danger",
+        };
+      }
+
+      return {
+        text: "Kết thúc",
+        class: "bg-secondary",
+      };
     },
 
     async loadNotifications() {
       this.loaded = false;
+
       try {
         const res = await baseRequestDoctor.get("/doctor/support/notifications");
+
         if (res.data.status) {
           this.notifications = res.data.data || [];
-          this.filteredList = [...this.notifications];
-          this.currentPage = 1;
+          this.applyFilter();
         }
       } catch (e) {
         this.$toast?.error("Không thể tải danh sách thông báo!");
@@ -389,36 +631,35 @@ export default {
     },
 
     applyFilter() {
-      const t = (this.filters.title || "").trim().toLowerCase();
-      const recipient = this.filters.recipient;
-      const type = this.filters.type;
-      const from = this.filters.from_date ? new Date(this.filters.from_date) : null;
-      const to = this.filters.to_date ? new Date(this.filters.to_date) : null;
+      const title = (this.filters.title || "").trim().toLowerCase();
 
-      this.filteredList = (this.notifications || []).filter((x) => {
-        // title
-        if (t && !(x.title || "").toLowerCase().includes(t)) return false;
+      this.filteredList = (this.notifications || []).filter((item) => {
+        if (title && !(item.title || "").toLowerCase().includes(title)) {
+          return false;
+        }
 
-        // recipient
-        if (recipient) {
-          if (recipient === "all") {
-            if (x.recipient !== "all") return false;
-          } else {
-            if (x.recipient !== recipient) return false;
+        if (this.filters.recipient) {
+          if (item.recipient !== this.filters.recipient) return false;
+        }
+
+        if (this.filters.type === "emergency" && !item.emergency) {
+          return false;
+        }
+
+        if (this.filters.type === "normal" && item.emergency) {
+          return false;
+        }
+
+        if (this.filters.status === "active") {
+          if (this.notificationStatus(item).text !== "Đang diễn ra") {
+            return false;
           }
         }
 
-        // type
-        if (type === "emergency" && !x.emergency) return false;
-        if (type === "normal" && x.emergency) return false;
-
-        // date range
-        const created = x.created_at ? new Date(x.created_at) : null;
-        if (from && created && created < from) return false;
-        if (to && created) {
-          const end = new Date(to);
-          end.setHours(23, 59, 59, 999);
-          if (created > end) return false;
+        if (this.filters.status === "ended") {
+          if (this.notificationStatus(item).text !== "Kết thúc") {
+            return false;
+          }
         }
 
         return true;
@@ -426,54 +667,142 @@ export default {
 
       this.currentPage = 1;
     },
+
     async submitConsultation() {
       if (!this.form.title || !this.form.content) {
-        return this.$toast.error("Tiêu đề và nội dung không được để trống!");
+        return this.$toast?.error("Tiêu đề và nội dung không được để trống!");
+      }
+
+      if (this.form.emergency && !this.form.expires_at) {
+        return this.$toast?.error("Vui lòng chọn thời gian hết hạn cảnh báo!");
+      }
+
+      if (this.form.emergency && new Date(this.form.expires_at) <= new Date()) {
+        return this.$toast?.error("Thời gian hết hạn phải lớn hơn hiện tại!");
       }
 
       this.sending = true;
+
       try {
-        // BE bạn gửi: 1 endpoint nhận cả emergency
-        const res = await baseRequestDoctor.post("/doctor/support/notifications", this.form);
+        const res = await baseRequestDoctor.post(
+          "/doctor/support/notifications",
+          this.form
+        );
 
-        if (res.data.status) this.$toast.success(res.data.message || "Gửi thông báo thành công!");
-        else this.$toast.error(res.data.message || "Gửi thông báo thất bại!");
+        if (res.data.status) {
+          this.$toast?.success(res.data.message || "Gửi thông báo thành công!");
 
-        await this.loadNotifications();
+          await this.loadNotifications();
 
-        this.form = { title: "", recipient: "all", emergency: false, content: "" };
+          this.form = {
+            title: "",
+            recipient: "all",
+            emergency: false,
+            content: "",
+            expires_at: "",
+          };
+        } else {
+          this.$toast?.error(res.data.message || "Gửi thông báo thất bại!");
+        }
       } catch (err) {
-        this.$toast.error("Lỗi server!");
+        this.$toast?.error(err.response?.data?.message || "Lỗi server!");
       } finally {
         this.sending = false;
       }
     },
 
-    formatDate(d) {
+    openCloseConfirmModal(item) {
+      this.closeTarget = item;
+
+      const detailEl = document.getElementById("notificationDetailModal");
+      const confirmEl = document.getElementById("closeEmergencyModal");
+
+      const detailModal = Modal.getOrCreateInstance(detailEl);
+      const confirmModal = Modal.getOrCreateInstance(confirmEl);
+
+      detailEl.addEventListener(
+        "hidden.bs.modal",
+        () => {
+          this.clearModalBackdrop();
+
+          setTimeout(() => {
+            confirmModal.show();
+          }, 150);
+        },
+        { once: true }
+      );
+
+      detailModal.hide();
+    },
+
+    async confirmCloseEmergency() {
+      if (!this.closeTarget?.id) return;
+
+      this.closing = true;
+
+      try {
+        const res = await baseRequestDoctor.patch(
+          `/doctor/support/notifications/${this.closeTarget.id}/close`
+        );
+
+        if (res.data.status) {
+          this.$toast?.success(res.data.message || "Đã tắt cảnh báo.");
+
+          const confirmEl = document.getElementById("closeEmergencyModal");
+          const confirmModal = Modal.getOrCreateInstance(confirmEl);
+
+          confirmEl.addEventListener(
+            "hidden.bs.modal",
+            () => {
+              this.clearModalBackdrop();
+            },
+            { once: true }
+          );
+
+          confirmModal.hide();
+
+          this.selectedNotification = {
+            ...this.selectedNotification,
+            is_active: 0,
+            closed_at: new Date().toISOString(),
+          };
+
+          this.closeTarget = null;
+
+          await this.loadNotifications();
+        } else {
+          this.$toast?.error(res.data.message || "Không thể tắt cảnh báo.");
+        }
+      } catch (error) {
+        this.$toast?.error(
+          error.response?.data?.message || "Lỗi khi tắt cảnh báo."
+        );
+      } finally {
+        this.closing = false;
+      }
+    },
+
+    clearModalBackdrop() {
+      document.body.classList.remove("modal-open");
+      document.body.style.removeProperty("overflow");
+      document.body.style.removeProperty("padding-right");
+
+      document.querySelectorAll(".modal-backdrop").forEach((el) => {
+        el.remove();
+      });
+    },
+
+    formatDateTime(d) {
       if (!d) return "-";
-      return new Date(d).toLocaleDateString("vi-VN");
-    },
 
-    getStatusClass(status) {
-      switch (status) {
-        case "sent":
-          return "badge-green";
-        case "sending":
-          return "badge-yellow";
-        default:
-          return "badge-yellow";
-      }
-    },
-
-    getStatusText(status) {
-      switch (status) {
-        case "sent":
-          return "Đã gửi";
-        case "sending":
-          return "Đang gửi";
-        default:
-          return "Khác";
-      }
+      return new Date(d).toLocaleString("vi-VN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
     },
 
     openDetail(item) {
@@ -489,16 +818,6 @@ export default {
   font-size: 0.75rem;
   font-weight: 600;
   border-radius: 20px;
-}
-
-.badge-green {
-  background: #d1e7dd;
-  color: #198754;
-}
-
-.badge-yellow {
-  background: #fff3cd;
-  color: #664d03;
 }
 
 .support-page-wrapper {

@@ -122,7 +122,43 @@ const routes = [
   {
     path: "/admin/blood-inventory",
     component: () => import("../components/Admin/BloodInventory/index.vue"),
-    meta: { layout: "admin", title: "Quản lý kho máu" },
+    meta: { layout: "admin", title: "Tổng quát kho máu" },
+    beforeEnter: checkAdmin,
+  },
+  {
+    path: "/admin/blood-inventory/detail",
+    component: () => import("../components/Admin/BloodInventoryDetail/index.vue"),
+    meta: { layout: "admin", title: "Chi tiết kho máu" },
+    beforeEnter: checkAdmin,
+  },
+  {
+    path: "/admin/blood-inventory/history",
+    component: () => import("../components/Admin/BloodInventoryHistory/index.vue"),
+    meta: { layout: "admin", title: "Lịch sử kho máu" },
+    beforeEnter: checkAdmin,
+  },
+  {
+    path: "/admin/blood-inventory/groups",
+    redirect: "/admin/blood-inventory/detail",
+  },
+  {
+    path: "/admin/blood-inventory/quality",
+    redirect: "/admin/blood-inventory/detail",
+  },
+  {
+    path: "/admin/blood-inventory/reports",
+    redirect: "/admin/blood-inventory/history",
+  },
+  {
+    path: "/admin/slot-dashboard",
+    component: () => import("../components/Admin/SlotDashboard/index.vue"),
+    meta: { layout: "admin", title: "Dashboard Slot" },
+    beforeEnter: checkAdmin,
+  },
+  {
+    path: "/admin/achievements",
+    component: () => import("../components/Admin/AchievementManagement/index.vue"),
+    meta: { layout: "admin", title: "Quản lý huy hiệu" },
     beforeEnter: checkAdmin,
   },
   {
@@ -152,17 +188,24 @@ const routes = [
     beforeEnter: checkDoctor,
   },
   {
-    path: "/Hospital/blood-inventory/:id",
-    name: "BloodBatchDetail",
-    component: () => import("../components/Hospital/BloodBatchDetail/index.vue"),
-    meta: { layout: "Hospital", title: "Chi tiết lô máu" },
-    beforeEnter: checkDoctor,
+    path: "/Hospital/blood-batch-detail/:id",
+    redirect: (to) => ({
+      name: "BloodBatchDetail",
+      params: { id: to.params.id },
+    }),
   },
   {
     path: "/Hospital/blood-inventory/log",
     name: "BloodStockLog",
     component: () => import("../components/Hospital/BloodStockLog/index.vue"),
     meta: { layout: "Hospital", title: "Nhật ký kho" },
+    beforeEnter: checkDoctor,
+  },
+  {
+    path: "/Hospital/blood-inventory/:id",
+    name: "BloodBatchDetail",
+    component: () => import("../components/Hospital/BloodBatchDetail/index.vue"),
+    meta: { layout: "Hospital", title: "Chi tiết lô máu" },
     beforeEnter: checkDoctor,
   },
   {
@@ -184,12 +227,12 @@ const routes = [
     meta: { layout: "Hospital", title: "Quản lý đặt lịch" },
     beforeEnter: checkDoctor,
   },
-  {
-    path: "/Hospital/donation-complete",
-    component: () => import("../components/Hospital/DonationComplete/index.vue"),
-    meta: { layout: "Hospital", title: "Ghi nhận hiến máu" },
-    beforeEnter: checkDoctor,
-  },
+  // {
+  //   path: "/Hospital/donation-complete",
+  //   component: () => import("../components/Hospital/DonationComplete/index.vue"),
+  //   meta: { layout: "Hospital", title: "Ghi nhận hiến máu" },
+  //   beforeEnter: checkDoctor,
+  // },
   {
     path: "/Hospital/campaign-management",
     component: () => import("../components/Hospital/CampaignManagement/index.vue"),
@@ -232,8 +275,72 @@ const routes = [
     meta: { layout: "Hospital", title: "Đổi mật khẩu" },
     beforeEnter: checkDoctor,
   },
-
+  {
+    path: "/Hospital/check-in-scanner",
+    name: "CheckInScanner",
+    component: () => import("../components/Hospital/CheckInScanner/index.vue"),
+    meta: { layout: "Hospital", title: "Quét mã check-in" },
+    beforeEnter: checkDoctor,
+  },
+  {
+  path: "/Hospital/emergency-ai",
+  component: () => import("../components/Hospital/EmergencyAI/index.vue"),
+  meta: { layout: "Hospital", title: "Đề xuất AI" },
+  beforeEnter: checkDoctor,
+},
+  {
+    path: "/Hospital/today-checked-in",
+    component: () => import("../components/Hospital/TodayCheckedIn/index.vue"),
+    meta: { layout: "Hospital", title: "Check-in hôm nay" },
+    beforeEnter: checkDoctor,
+  },
+  {
+    path: "/Hospital/donation-process",
+    component: () =>
+      import("../components/Hospital/DonationProcess/index.vue"),
+    meta: {
+      layout: "Hospital",
+      title: "Donation Process",
+    },
+    beforeEnter: checkDoctor,
+  },
+  {
+    path: "/Hospital/blood-testing",
+    component: () => import("../components/Hospital/BloodTesting/index.vue"),
+    meta: {
+      layout: "Hospital",
+      title: "Kiểm định túi máu",
+    },
+    beforeEnter: checkDoctor,
+  },
+  {
+    path: "/Hospital/leaderboard",
+    component: () => import("../components/Hospital/Leaderboard/index.vue"),
+    meta: { layout: "Hospital", title: "Bảng xếp hạng" },
+    beforeEnter: checkDoctor,
+  },
   // ===== DONOR =====
+  {
+    path: "/my-appointments",
+    name: "MyAppointments",
+    component: () => import("../components/Client/MyAppointments/index.vue"),
+    meta: { layout: "client", title: "Lịch hẹn của tôi" },
+    beforeEnter: checkDonor,
+  },
+  {
+    path: "/my-appointments/:id",
+    name: "AppointmentDetailHub",
+    component: () => import("../components/Client/AppointmentDetailHub/index.vue"),
+    meta: { layout: "client", title: "Chi tiết lịch hẹn" },
+    beforeEnter: checkDonor,
+  },
+  {
+    path: "/my-appointments/:appointmentId/qr-checkin",
+    name: "QRCodeCheckin",
+    component: () => import("../components/Client/QRcodeCheckin/index.vue"),
+    meta: { layout: "client", title: "Mã QR check-in" },
+    beforeEnter: checkDonor,
+  },
   {
     path: "/campaigns/:id",
     component: () => import("../components/Client/CampaignDetail/index.vue"),
@@ -252,6 +359,7 @@ const routes = [
     meta: { layout: "client", title: "Lịch sử hiến máu" },
     beforeEnter: checkDonor,
   },
+  
   {
     path: "/account-security",
     component: () => import("../components/Client/accountsecurity/index.vue"),
