@@ -122,8 +122,32 @@ const routes = [
   {
     path: "/admin/blood-inventory",
     component: () => import("../components/Admin/BloodInventory/index.vue"),
-    meta: { layout: "admin", title: "Quản lý kho máu" },
+    meta: { layout: "admin", title: "Tổng quát kho máu" },
     beforeEnter: checkAdmin,
+  },
+  {
+    path: "/admin/blood-inventory/detail",
+    component: () => import("../components/Admin/BloodInventoryDetail/index.vue"),
+    meta: { layout: "admin", title: "Chi tiết kho máu" },
+    beforeEnter: checkAdmin,
+  },
+  {
+    path: "/admin/blood-inventory/history",
+    component: () => import("../components/Admin/BloodInventoryHistory/index.vue"),
+    meta: { layout: "admin", title: "Lịch sử kho máu" },
+    beforeEnter: checkAdmin,
+  },
+  {
+    path: "/admin/blood-inventory/groups",
+    redirect: "/admin/blood-inventory/detail",
+  },
+  {
+    path: "/admin/blood-inventory/quality",
+    redirect: "/admin/blood-inventory/detail",
+  },
+  {
+    path: "/admin/blood-inventory/reports",
+    redirect: "/admin/blood-inventory/history",
   },
   {
     path: "/admin/slot-dashboard",
@@ -164,17 +188,24 @@ const routes = [
     beforeEnter: checkDoctor,
   },
   {
-    path: "/Hospital/blood-inventory/:id",
-    name: "BloodBatchDetail",
-    component: () => import("../components/Hospital/BloodBatchDetail/index.vue"),
-    meta: { layout: "Hospital", title: "Chi tiết lô máu" },
-    beforeEnter: checkDoctor,
+    path: "/Hospital/blood-batch-detail/:id",
+    redirect: (to) => ({
+      name: "BloodBatchDetail",
+      params: { id: to.params.id },
+    }),
   },
   {
     path: "/Hospital/blood-inventory/log",
     name: "BloodStockLog",
     component: () => import("../components/Hospital/BloodStockLog/index.vue"),
     meta: { layout: "Hospital", title: "Nhật ký kho" },
+    beforeEnter: checkDoctor,
+  },
+  {
+    path: "/Hospital/blood-inventory/:id",
+    name: "BloodBatchDetail",
+    component: () => import("../components/Hospital/BloodBatchDetail/index.vue"),
+    meta: { layout: "Hospital", title: "Chi tiết lô máu" },
     beforeEnter: checkDoctor,
   },
   {
