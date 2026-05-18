@@ -1,16 +1,10 @@
 <template>
-  <section
-    class="position-relative d-flex align-items-center justify-content-center text-center"
-    style="
+  <section class="position-relative d-flex align-items-center justify-content-center text-center" style="
       background: url('https://benhvientinh.caobang.gov.vn/uploads/news/2022_04/hien-mau-060422-2.jpg')
         center/cover no-repeat;
       height: 400px;
-    "
-  >
-    <div
-      class="position-absolute top-0 start-0 w-100 h-100 bg-white"
-      style="opacity: 0.7"
-    ></div>
+    ">
+    <div class="position-absolute top-0 start-0 w-100 h-100 bg-white" style="opacity: 0.7"></div>
 
     <div class="position-relative z-1 container">
       <h1 class="fw-bold display-5">
@@ -83,17 +77,10 @@
     </div>
 
     <div class="row g-4 justify-content-center">
-      <div
-        class="col-lg-3 col-md-6"
-        v-for="(value, idx) in coreValues"
-        :key="idx"
-      >
+      <div class="col-lg-3 col-md-6" v-for="(value, idx) in coreValues" :key="idx">
         <div class="card border-0 shadow-sm h-100 rounded-4 text-center p-4">
-          <span
-            class="d-flex justify-content-center align-items-center rounded-circle mb-3 mx-auto"
-            :class="value.bg"
-            style="width: 64px; height: 64px"
-          >
+          <span class="d-flex justify-content-center align-items-center rounded-circle mb-3 mx-auto" :class="value.bg"
+            style="width: 64px; height: 64px">
             <i :class="value.icon"></i>
           </span>
           <h5 class="fw-bold mb-2">{{ value.title }}</h5>
@@ -112,15 +99,8 @@
     </div>
 
     <div class="row g-4">
-      <div
-        class="col-lg-3 col-md-6"
-        v-for="(stat, idx) in statistics"
-        :key="idx"
-      >
-        <div
-          class="card h-100 border-0 rounded-4 shadow text-white"
-          :class="stat.bg"
-        >
+      <div class="col-lg-3 col-md-6" v-for="(stat, idx) in statistics" :key="idx">
+        <div class="card h-100 border-0 rounded-4 shadow text-white" :class="stat.bg">
           <div class="card-body text-center p-4">
             <i :class="stat.icon" class="fa-2x mb-3"></i>
             <h2 class="fw-bold mb-2">{{ stat.value }}</h2>
@@ -142,11 +122,7 @@
     <div class="row justify-content-center g-4 mb-5 text-center">
       <div class="col-6 col-md-2" v-for="(member, index) in team" :key="index">
         <div class="team-member">
-          <img
-            :src="member.image"
-            class="rounded-circle mb-3 img-fluid shadow"
-            alt="avatar"
-          />
+          <img :src="member.image" class="rounded-circle mb-3 img-fluid shadow" alt="avatar" />
           <h6 class="fw-bold">{{ member.name }}</h6>
           <p class="text-muted small mb-1">{{ member.role }}</p>
           <p class="small text-primary">{{ member.email }}</p>
@@ -160,10 +136,7 @@
         Mỗi giọt máu hiến tặng là một cơ hội cứu sống. Hãy tham gia cộng đồng
         hiến máu ngay hôm nay!
       </p>
-      <router-link
-        to="/register-blooddonation"
-        class="btn btn-danger btn-lg rounded-pill text-decoration-none"
-      >
+      <router-link to="/register-blooddonation" class="btn btn-danger btn-lg rounded-pill text-decoration-none">
         ❤️ Đăng ký hiến máu ngay hôm nay
       </router-link>
     </div>
@@ -176,6 +149,7 @@ import Luong from "../../../assets/img/Luong.jpeg";
 import Thanh from "../../../assets/img/Thanh.jpeg";
 import Tai from "../../../assets/img/Tai.jpeg";
 import Chi from "../../../assets/img/Chi.jpeg";
+import Minh from "../../../assets/img/minh.jpg"
 import Toan from "../../../assets/img/Toan.jpeg";
 export default {
   // Thay thế setup() bằng data() trong Options API
@@ -295,35 +269,25 @@ export default {
 
       team: [
         {
-          name: "Tài Phạm",
-          role: "Project Manager",
-          email: "phamtantaihocsinh@gmail.com",
-          image: Tai,
-        },
-        {
           name: "Lê Toàn",
           role: "Full-stack Developer",
           email: "Lvt1222003@gmail.com",
           image: Toan,
         },
-        {
-          name: "Dương Lượng",
-          role: "Frontend Developer",
-          email: "luong0701qb@gmail.com",
-          image: Luong,
-        },
-        {
-          name: "Quỳnh Chi",
-          role: "Frontend Developer",
-          email: "quynhchihtk84@gmail.com",
-          image: Chi,
-        },
+
         {
           name: "Minh Thành",
-          role: "Frontend Developer",
+          role: "Project Manager",
           email: "duminhthanh.dmx2@gmail.com",
           image: Thanh,
         },
+        {
+          name: "Cao Minh",
+          role: "Frontend Developer",
+          email: "minhcao05092004@gmail.com",
+          image: Minh,
+        },
+
       ],
     };
   },

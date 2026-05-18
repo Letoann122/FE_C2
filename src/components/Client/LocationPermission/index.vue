@@ -17,7 +17,7 @@
           <button
             type="button"
             class="btn-close btn-close-white"
-            data-bs-dismiss="modal"
+            @click="skipLocation"
           ></button>
         </div>
 
@@ -34,8 +34,8 @@
         <div class="modal-footer">
           <button
             class="btn btn-secondary"
-            data-bs-dismiss="modal"
             :disabled="loading"
+            @click="skipLocation"
           >
             Để sau
           </button>
@@ -73,7 +73,6 @@ export default {
 
   mounted() {
     this.initModal();
-    this.checkShouldAskLocation();
   },
 
   methods: {
@@ -81,9 +80,17 @@ export default {
       this.$nextTick(() => {
         const modalEl = this.$refs.modalRef;
 
-        if (window.bootstrap && modalEl) {
-          this.modalInstance = new window.bootstrap.Modal(modalEl);
+        if (!window.bootstrap || !modalEl) {
+          console.warn("Bootstrap modal chưa sẵn sàng.");
+          return;
         }
+
+        this.modalInstance = new window.bootstrap.Modal(modalEl, {
+          backdrop: "static",
+          keyboard: false,
+        });
+
+        this.checkShouldAskLocation();
       });
     },
 
@@ -92,31 +99,41 @@ export default {
 
       if (!token) return;
 
-      const lastLocationAt = localStorage.getItem(
-        "donor_location_at"
-      );
+      const lastLocationAt = localStorage.getItem("donor_location_at");
+      const skipAt = localStorage.getItem("donor_location_skip_at");
 
-      // hỏi lại sau 7 ngày
-      if (lastLocationAt) {
-        const diff =
-          Date.now() -
-          new Date(lastLocationAt).getTime();
+      // Nếu đã cập nhật vị trí trong 7 ngày thì không hỏi lại
+      if (this.isWithinDays(lastLocationAt, 7)) return;
 
-        const days = diff / (1000 * 60 * 60 * 24);
-
-        if (days < 7) return;
-      }
+      // Nếu user bấm "Để sau" hoặc từ chối gần đây thì 1 ngày sau mới hỏi lại
+      if (this.isWithinDays(skipAt, 1)) return;
 
       setTimeout(() => {
         this.modalInstance?.show();
       }, 1200);
     },
 
+    isWithinDays(value, maxDays) {
+      if (!value) return false;
+
+      const time = new Date(value).getTime();
+
+      if (Number.isNaN(time)) return false;
+
+      const diff = Date.now() - time;
+      const days = diff / (1000 * 60 * 60 * 24);
+
+      return days < maxDays;
+    },
+
+    skipLocation() {
+      localStorage.setItem("donor_location_skip_at", new Date().toISOString());
+      this.modalInstance?.hide();
+    },
+
     requestLocation() {
       if (!navigator.geolocation) {
-        this.$toast.error(
-          "Trình duyệt không hỗ trợ GPS!"
-        );
+        this.$toast.error("Trình duyệt không hỗ trợ GPS!");
         return;
       }
 
@@ -125,63 +142,59 @@ export default {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           try {
-            const latitude =
-              position.coords.latitude;
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
 
-            const longitude =
-              position.coords.longitude;
-
-            const res =
-              await baseRequestClient.put(
-                "/donor/location",
-                {
-                  latitude,
-                  longitude,
-                }
-              );
+            const res = await baseRequestClient.put("/donor/location", {
+              latitude,
+              longitude,
+            });
 
             if (res.data?.status) {
-              localStorage.setItem(
-                "donor_location_at",
-                new Date().toISOString()
-              );
+              localStorage.setItem("donor_location_at", new Date().toISOString());
+              localStorage.removeItem("donor_location_skip_at");
 
-              localStorage.setItem(
-                "donor_last_lat",
-                latitude
-              );
+              localStorage.setItem("donor_last_lat", String(latitude));
+              localStorage.setItem("donor_last_lng", String(longitude));
 
-              localStorage.setItem(
-                "donor_last_lng",
-                longitude
-              );
-
-              this.$toast.success(
-                "Đã cập nhật vị trí!"
-              );
+              this.$toast.success("Đã cập nhật vị trí!");
 
               this.modalInstance?.hide();
             } else {
               this.$toast.error(
-                res.data?.message ||
-                  "Không thể cập nhật vị trí!"
+                res.data?.message || "Không thể cập nhật vị trí!"
               );
             }
           } catch (error) {
+            console.error("Update donor location error:", error);
+
             this.$toast.error(
-              error?.response?.data?.message ||
-                "Không thể cập nhật vị trí!"
+              error?.response?.data?.message || "Không thể cập nhật vị trí!"
             );
           } finally {
             this.loading = false;
           }
         },
-        () => {
+        (error) => {
           this.loading = false;
+          localStorage.setItem("donor_location_skip_at", new Date().toISOString());
 
-          this.$toast.error(
-            "Bạn chưa cho phép truy cập vị trí!"
-          );
+          if (error.code === error.PERMISSION_DENIED) {
+            this.$toast.error("Bạn chưa cho phép truy cập vị trí!");
+            return;
+          }
+
+          if (error.code === error.POSITION_UNAVAILABLE) {
+            this.$toast.error("Không lấy được vị trí hiện tại!");
+            return;
+          }
+
+          if (error.code === error.TIMEOUT) {
+            this.$toast.error("Lấy vị trí quá thời gian chờ!");
+            return;
+          }
+
+          this.$toast.error("Lỗi khi lấy vị trí GPS!");
         },
         {
           enableHighAccuracy: true,

@@ -48,10 +48,8 @@
                 <th>{{ row.blood_type }}</th>
                 <td>{{ row.total_units }}</td>
                 <td>
-                  <span
-                    class="badge rounded-pill"
-                    :class="row.expiring_units > 0 ? 'bg-warning text-dark' : 'bg-success'"
-                  >
+                  <span class="badge rounded-pill"
+                    :class="row.expiring_units > 0 ? 'bg-warning text-dark' : 'bg-success'">
                     {{ row.expiring_units }}
                   </span>
                 </td>
@@ -74,19 +72,9 @@
         </h5>
 
         <div class="d-flex gap-2 align-items-center">
-          <input
-            v-model="chartFilter.from"
-            type="date"
-            class="form-control form-control-sm"
-            style="width: 150px"
-          />
+          <input v-model="chartFilter.from" type="date" class="form-control form-control-sm" style="width: 150px" />
 
-          <input
-            v-model="chartFilter.to"
-            type="date"
-            class="form-control form-control-sm"
-            style="width: 150px"
-          />
+          <input v-model="chartFilter.to" type="date" class="form-control form-control-sm" style="width: 150px" />
 
           <button class="btn btn-sm btn-danger" @click="filterByDate">
             Lọc
@@ -131,12 +119,8 @@
                 <td>{{ formatDate(batch.expiry_date) }}</td>
                 <td>{{ batch.imported_by?.full_name || "-" }}</td>
                 <td class="text-nowrap">
-                  <button
-                    class="btn btn-sm btn-outline-primary"
-                    data-bs-toggle="modal"
-                    data-bs-target="#batchDetailModal"
-                    @click="openBatchDetail(batch)"
-                  >
+                  <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                    data-bs-target="#batchDetailModal" @click="openBatchDetail(batch)">
                     Xem
                   </button>
                 </td>
@@ -163,15 +147,11 @@
             <option value="">Tất cả</option>
             <option value="IN">Nhập</option>
             <option value="OUT">Xuất</option>
+              <option value="DESTROY">Hết hạn</option>
           </select>
 
-          <input
-            v-model="txFilters.q"
-            type="text"
-            class="form-control form-control-sm"
-            style="min-width: 220px"
-            placeholder="Tìm theo nhóm máu, ghi chú, người làm..."
-          />
+          <input v-model="txFilters.q" type="text" class="form-control form-control-sm" style="min-width: 220px"
+            placeholder="Tìm theo nhóm máu, ghi chú, người làm..." />
 
           <input v-model="txFilters.from" type="date" class="form-control form-control-sm" />
           <input v-model="txFilters.to" type="date" class="form-control form-control-sm" />
@@ -198,21 +178,17 @@
                 <td>{{ (txPage - 1) * txPageSize + index + 1 }}</td>
                 <td style="white-space: nowrap">{{ formatDateTime(tx.occurred_at) }}</td>
                 <td>
-                  <span class="badge" :class="tx.tx_type === 'IN' ? 'bg-success' : 'bg-danger'">
-                    {{ txLabel(tx.tx_type) }}
-                  </span>
+                  <span class="badge" :class="txBadgeClass(tx.tx_type)">
+  {{ txLabel(tx.tx_type) }}
+</span>
                 </td>
                 <td class="fw-bold">{{ tx.blood_type }}</td>
                 <td>{{ tx.units }}</td>
                 <td>{{ tx.reason || "-" }}</td>
                 <td>{{ tx.by?.full_name || "-" }}</td>
                 <td class="text-nowrap">
-                  <button
-                    class="btn btn-sm btn-outline-primary"
-                    data-bs-toggle="modal"
-                    data-bs-target="#txDetailModal"
-                    @click="openTxDetail(tx)"
-                  >
+                  <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#txDetailModal"
+                    @click="openTxDetail(tx)">
                     Xem
                   </button>
                 </td>
@@ -322,9 +298,9 @@
                 <hr />
                 <div class="text-muted small">Loại</div>
                 <div>
-                  <span class="badge" :class="activeTx.tx_type === 'IN' ? 'bg-success' : 'bg-danger'">
-                    {{ txLabel(activeTx.tx_type) }}
-                  </span>
+                  <span class="badge" :class="txBadgeClass(activeTx.tx_type)">
+  {{ txLabel(activeTx.tx_type) }}
+</span>
                 </div>
                 <hr />
                 <div class="text-muted small">Thời gian</div>
@@ -489,8 +465,17 @@ export default {
       const to = this.txFilters.to ? new Date(this.txFilters.to) : null;
 
       return (this.transactions || []).filter((tx) => {
-        if (type && tx.tx_type !== type) return false;
+        if (type) {
+  const txType = String(tx.tx_type || "").toUpperCase();
+  const txGroup = String(tx.tx_group || "").toUpperCase();
 
+  if (type === "DESTROY") {
+    if (txGroup !== "DESTROY" && !this.isDestroyTx(txType)) return false;
+  } else if (txType !== type) {
+    return false;
+  }
+}
+        
         if (q) {
           const hay = [tx.blood_type, tx.reason, tx.by?.full_name, String(tx.id)]
             .filter(Boolean)
@@ -584,12 +569,49 @@ export default {
       this.loadData();
     },
 
-    txLabel(type) {
-      const t = String(type || "").toUpperCase();
-      if (t === "IN") return "Nhập";
-      if (t === "OUT") return "Xuất";
-      return t || "-";
-    },
+    isDestroyTx(type) {
+  const t = String(type || "").toUpperCase();
+
+  return [
+    "EXPIRE",
+    "EXPIRED",
+    "DISCARD",
+    "DISCARDED",
+    "DESTROY",
+    "DESTROYED",
+  ].includes(t);
+},
+
+txLabel(type) {
+  const t = String(type || "").toUpperCase();
+
+  if (t === "IN") return "Nhập";
+  if (t === "OUT") return "Xuất";
+
+  if (t === "EXPIRE" || t === "EXPIRED") return "Hết hạn";
+
+  if (
+    t === "DISCARD" ||
+    t === "DISCARDED" ||
+    t === "DESTROY" ||
+    t === "DESTROYED"
+  ) {
+    return "Tiêu hủy";
+  }
+
+  return t || "-";
+},
+
+txBadgeClass(type) {
+  const t = String(type || "").toUpperCase();
+
+  if (t === "IN") return "bg-success";
+  if (t === "OUT") return "bg-primary";
+  if (t === "EXPIRE" || t === "EXPIRED") return "bg-danger";
+  if (this.isDestroyTx(t)) return "bg-dark";
+
+  return "bg-secondary";
+},
 
     loadData() {
       const fallback = "Không thể tải dữ liệu kho máu!";
