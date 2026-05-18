@@ -76,9 +76,9 @@
 
           <input v-model="chartFilter.to" type="date" class="form-control form-control-sm" style="width: 150px" />
 
-          <button class="btn btn-sm btn-danger" @click="filterByDate">
-            Lọc
-          </button>
+          <button class="btn btn-sm btn-danger" @click="filterChartByDate">
+  Lọc
+</button>
         </div>
       </div>
 

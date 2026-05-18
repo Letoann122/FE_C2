@@ -19,7 +19,7 @@
           </span>
 
           <span class="sbb-fab-action-text">
-            <strong>Smart Blood Bot</strong>
+            <strong>Smart Blood Donation Bot</strong>
             <small>Trợ lý hiến máu AI</small>
           </span>
         </button>
@@ -72,7 +72,7 @@
             </div>
 
             <div class="sbb-title-wrap">
-              <h4>Smart Blood Bot</h4>
+              <h4>Smart Blood Donation Bot</h4>
               <p>Trợ lý hiến máu thông minh</p>
             </div>
 
@@ -218,7 +218,7 @@ export default {
       messages: [
         {
           role: "bot",
-          text: "Mình là Smart Blood Bot. Bạn có thể hỏi mình về quy trình hiến máu, điều kiện hiến máu, lịch hẹn, lịch sử hiến máu hoặc các chiến dịch đang diễn ra.",
+          text: "Mình là Smart Blood Donation Bot. Bạn có thể hỏi mình về quy trình hiến máu, điều kiện hiến máu, lịch hẹn, lịch sử hiến máu hoặc các chiến dịch đang diễn ra.",
         },
       ],
 

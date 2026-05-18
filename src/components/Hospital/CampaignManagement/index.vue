@@ -527,7 +527,9 @@ export default {
             this.$toast.error(res.data.message || "Không thể tạo chiến dịch");
           }
         })
-        .catch(() => this.$toast.error("Lỗi server!"));
+        .catch((error) => {
+          console.error("createCampaign error:", error);
+        });
     },
 
     openGenerateSlotModal(campaign) {
@@ -583,11 +585,6 @@ export default {
         }
       } catch (error) {
         console.error("generateCampaignSlots error:", error);
-
-        this.$toast.error(
-          error?.response?.data?.message ||
-            "Không thể tạo slot chiến dịch!"
-        );
       } finally {
         this.generatingSlot = false;
       }

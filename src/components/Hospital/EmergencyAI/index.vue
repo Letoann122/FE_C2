@@ -3,9 +3,7 @@
     <!-- HEADER -->
     <div class="card border-0 shadow-sm rounded-4 mb-4">
       <div class="card-body p-4">
-        <div
-          class="d-flex justify-content-between align-items-start flex-wrap gap-3"
-        >
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
           <div>
             <h3 class="fw-bold text-danger mb-1">
               <i class="bi bi-magic me-2"></i>
@@ -40,19 +38,12 @@
                 Điểm tiếp nhận máu
               </label>
 
-              <select
-                v-model="form.donation_site_id"
-                class="form-select"
-              >
+              <select v-model="form.donation_site_id" class="form-select">
                 <option value="">
                   Chọn điểm tiếp nhận
                 </option>
 
-                <option
-                  v-for="site in donationSites"
-                  :key="site.id"
-                  :value="site.id"
-                >
+                <option v-for="site in donationSites" :key="site.id" :value="site.id">
                   {{ site.name }}
                 </option>
               </select>
@@ -64,15 +55,8 @@
                   Nhóm máu
                 </label>
 
-                <select
-                  v-model="form.blood_group"
-                  class="form-select"
-                >
-                  <option
-                    v-for="item in bloodGroups"
-                    :key="item"
-                    :value="item"
-                  >
+                <select v-model="form.blood_group" class="form-select">
+                  <option v-for="item in bloodGroups" :key="item" :value="item">
                     {{ item }}
                   </option>
                 </select>
@@ -83,10 +67,7 @@
                   Mức độ
                 </label>
 
-                <select
-                  v-model="form.urgency_level"
-                  class="form-select"
-                >
+                <select v-model="form.urgency_level" class="form-select">
                   <option value="normal">
                     Bình thường
                   </option>
@@ -108,13 +89,8 @@
                   Lượng máu cần (ml)
                 </label>
 
-                <input
-                  v-model.number="form.required_volume_ml"
-                  type="number"
-                  class="form-control"
-                  min="250"
-                  step="50"
-                />
+                <input v-model.number="form.required_volume_ml" type="number" class="form-control" min="250"
+                  step="50" />
               </div>
 
               <div class="col-md-6">
@@ -122,10 +98,7 @@
                   Trong bao lâu
                 </label>
 
-                <select
-                  v-model.number="form.needed_in_hours"
-                  class="form-select"
-                >
+                <select v-model.number="form.needed_in_hours" class="form-select">
                   <option :value="1">1 giờ</option>
                   <option :value="2">2 giờ</option>
                   <option :value="4">4 giờ</option>
@@ -141,11 +114,7 @@
                 Tiêu đề
               </label>
 
-              <input
-                v-model="form.title"
-                class="form-control"
-                placeholder="Ví dụ: Khẩn cấp cần máu O-"
-              />
+              <input v-model="form.title" class="form-control" placeholder="Ví dụ: Khẩn cấp cần máu O-" />
             </div>
 
             <div class="mt-3">
@@ -153,29 +122,15 @@
                 Nội dung
               </label>
 
-              <textarea
-                v-model="form.message"
-                class="form-control"
-                rows="4"
-                placeholder="Mô tả yêu cầu khẩn cấp..."
-              ></textarea>
+              <textarea v-model="form.message" class="form-control" rows="4"
+                placeholder="Mô tả yêu cầu khẩn cấp..."></textarea>
             </div>
 
             <div class="d-grid mt-4">
-              <button
-                class="btn btn-danger"
-                @click="createEmergencyRequest"
-                :disabled="creating"
-              >
-                <span
-                  v-if="creating"
-                  class="spinner-border spinner-border-sm me-2"
-                ></span>
+              <button class="btn btn-danger" @click="createEmergencyRequest" :disabled="creating">
+                <span v-if="creating" class="spinner-border spinner-border-sm me-2"></span>
 
-                <i
-                  v-else
-                  class="bi bi-lightning-charge-fill me-2"
-                ></i>
+                <i v-else class="bi bi-lightning-charge-fill me-2"></i>
 
                 Tạo yêu cầu khẩn cấp
               </button>
@@ -187,31 +142,20 @@
       <!-- RIGHT -->
       <div class="col-lg-8">
         <!-- PANEL -->
-        <div
-          v-if="currentRequest"
-          class="card border-0 shadow-sm rounded-4 mb-4"
-        >
+        <div v-if="currentRequest" class="card border-0 shadow-sm rounded-4 mb-4">
           <div class="card-body p-4">
-            <div
-              class="d-flex justify-content-between align-items-start flex-wrap gap-3"
-            >
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
               <div>
                 <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
                   <span class="badge bg-danger fs-6 px-3 py-2">
                     {{ currentRequest.blood_group }}
                   </span>
 
-                  <span
-                    class="badge fs-6 px-3 py-2"
-                    :class="urgencyClass(currentRequest.urgency_level)"
-                  >
+                  <span class="badge fs-6 px-3 py-2" :class="urgencyClass(currentRequest.urgency_level)">
                     {{ urgencyLabel(currentRequest.urgency_level) }}
                   </span>
 
-                  <span
-                    class="badge fs-6 px-3 py-2"
-                    :class="statusClass(currentRequest.status)"
-                  >
+                  <span class="badge fs-6 px-3 py-2" :class="statusClass(currentRequest.status)">
                     {{ statusLabel(currentRequest.status) }}
                   </span>
                 </div>
@@ -226,7 +170,8 @@
 
                 <div class="small text-muted">
                   <i class="bi bi-geo-alt-fill me-1"></i>
-                  {{ currentRequest.donation_site_name || currentRequest.donation_site?.name || "Chưa có điểm tiếp nhận" }}
+                  {{ currentRequest.donation_site_name || currentRequest.donation_site?.name || "Chưa có điểm tiếp nhận"
+                  }}
                 </div>
               </div>
 
@@ -306,56 +251,27 @@
             </div>
 
             <div class="d-flex gap-2 flex-wrap mt-4">
-              <button
-                class="btn btn-outline-danger"
-                @click="loadRecommendations"
-                :disabled="loadingRecommendations"
-              >
-                <span
-                  v-if="loadingRecommendations"
-                  class="spinner-border spinner-border-sm me-2"
-                ></span>
+              <button class="btn btn-outline-danger" @click="loadRecommendations" :disabled="loadingRecommendations">
+                <span v-if="loadingRecommendations" class="spinner-border spinner-border-sm me-2"></span>
 
-                <i
-                  v-else
-                  class="bi bi-stars me-2"
-                ></i>
+                <i v-else class="bi bi-stars me-2"></i>
 
                 AI đề xuất donor
               </button>
 
-              <button
-                class="btn btn-outline-primary"
-                @click="saveRecommendations"
-                :disabled="savingRecommendations || recommendations.length === 0"
-              >
-                <span
-                  v-if="savingRecommendations"
-                  class="spinner-border spinner-border-sm me-2"
-                ></span>
+              <button class="btn btn-outline-primary" @click="saveRecommendations"
+                :disabled="savingRecommendations || recommendations.length === 0">
+                <span v-if="savingRecommendations" class="spinner-border spinner-border-sm me-2"></span>
 
-                <i
-                  v-else
-                  class="bi bi-save2 me-2"
-                ></i>
+                <i v-else class="bi bi-save2 me-2"></i>
 
                 Lưu danh sách đề xuất
               </button>
 
-              <button
-                class="btn btn-danger"
-                @click="sendEmergency"
-                :disabled="sendingEmergency || !currentRequest"
-              >
-                <span
-                  v-if="sendingEmergency"
-                  class="spinner-border spinner-border-sm me-2"
-                ></span>
+              <button class="btn btn-danger" @click="sendEmergency" :disabled="sendingEmergency || !currentRequest">
+                <span v-if="sendingEmergency" class="spinner-border spinner-border-sm me-2"></span>
 
-                <i
-                  v-else
-                  class="bi bi-broadcast me-2"
-                ></i>
+                <i v-else class="bi bi-broadcast me-2"></i>
 
                 Gửi popup donor
               </button>
@@ -364,10 +280,7 @@
         </div>
 
         <!-- EMPTY CURRENT REQUEST -->
-        <div
-          v-else
-          class="alert alert-light border rounded-4 mb-4"
-        >
+        <div v-else class="alert alert-light border rounded-4 mb-4">
           <i class="bi bi-info-circle text-danger me-1"></i>
           Vui lòng tạo yêu cầu khẩn cấp để hệ thống đề xuất donor phù hợp.
         </div>
@@ -375,9 +288,7 @@
         <!-- RECOMMENDATIONS -->
         <div class="card border-0 shadow-sm rounded-4">
           <div class="card-body p-4">
-            <div
-              class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4"
-            >
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
               <div>
                 <h5 class="fw-bold mb-1">
                   <i class="bi bi-people-fill text-danger me-2"></i>
@@ -394,10 +305,7 @@
               </div>
             </div>
 
-            <div
-              v-if="loadingRecommendations"
-              class="text-center py-5"
-            >
+            <div v-if="loadingRecommendations" class="text-center py-5">
               <div class="spinner-border text-danger"></div>
 
               <div class="mt-3 text-muted">
@@ -405,10 +313,7 @@
               </div>
             </div>
 
-            <div
-              v-else-if="recommendations.length === 0"
-              class="text-center py-5"
-            >
+            <div v-else-if="recommendations.length === 0" class="text-center py-5">
               <i class="bi bi-search-heart display-4 text-muted"></i>
 
               <div class="mt-3 fw-semibold">
@@ -421,97 +326,83 @@
             </div>
 
             <div v-else>
-              <div
-  v-for="(item, index) in recommendations"
-  :key="item.donor_id"
-  class="recommend-card"
->
-  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
-    <div class="d-flex gap-3">
-      <div class="rank-circle">
-        #{{ index + 1 }}
-      </div>
+              <div v-for="(item, index) in recommendations" :key="item.donor_id" class="recommend-card">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                  <div class="d-flex gap-3">
+                    <div class="rank-circle">
+                      #{{ index + 1 }}
+                    </div>
 
-      <div>
-        <div class="d-flex align-items-center gap-2 flex-wrap">
-          <h5 class="fw-bold mb-0">
-            {{ item.full_name }}
-          </h5>
+                    <div>
+                      <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <h5 class="fw-bold mb-0">
+                          {{ item.full_name }}
+                        </h5>
 
-          <span class="badge bg-danger">
-            {{ item.blood_group }}
-          </span>
-        </div>
+                        <span class="badge bg-danger">
+                          {{ item.blood_group }}
+                        </span>
+                      </div>
 
-        <div class="small text-muted mt-1">
-          <i class="bi bi-envelope me-1"></i>
-          {{ item.email }}
-        </div>
+                      <div class="small text-muted mt-1">
+                        <i class="bi bi-envelope me-1"></i>
+                        {{ item.email }}
+                      </div>
 
-        <div class="small text-muted">
-          <i class="bi bi-telephone me-1"></i>
-          {{ item.phone }}
-        </div>
+                      <div class="small text-muted">
+                        <i class="bi bi-telephone me-1"></i>
+                        {{ item.phone }}
+                      </div>
 
-        <div class="small text-muted">
-          <i class="bi bi-geo-alt me-1"></i>
-          {{ item.address || "Chưa cập nhật địa chỉ" }}
-        </div>
+                      <div class="small text-muted">
+                        <i class="bi bi-geo-alt me-1"></i>
+                        {{ item.address || "Chưa cập nhật địa chỉ" }}
+                      </div>
 
-        <div class="d-flex gap-2 flex-wrap mt-3">
-          <span class="mini-badge">
-            {{ item.donation_count }} lần hiến
-          </span>
+                      <div class="d-flex gap-2 flex-wrap mt-3">
+                        <span class="mini-badge">
+                          {{ item.donation_count }} lần hiến
+                        </span>
 
-          <span class="mini-badge">
-            {{ item.last_donation_days }} ngày
-          </span>
+                        <span class="mini-badge">
+                          {{ item.last_donation_days }} ngày
+                        </span>
 
-          <span
-            v-if="item.distance_km !== null"
-            class="mini-badge"
-          >
-            {{ item.distance_km }} km
-          </span>
+                        <span v-if="item.distance_km !== null" class="mini-badge">
+                          {{ item.distance_km }} km
+                        </span>
 
-          <span
-            v-if="item.eligible"
-            class="mini-badge success"
-          >
-            Đủ điều kiện
-          </span>
-        </div>
-      </div>
-    </div>
+                        <span v-if="item.eligible" class="mini-badge success">
+                          Đủ điều kiện
+                        </span>
+                      </div>
+                    </div>
+                  </div>
 
-    <div class="text-end">
-      <div class="score-circle">
-        {{ item.score }}%
-      </div>
+                  <div class="text-end">
+                    <div class="score-circle">
+                      {{ item.score }}%
+                    </div>
 
-      <div class="small text-muted mt-2">
-        AI Match Score
-      </div>
-    </div>
-  </div>
+                    <div class="small text-muted mt-2">
+                      AI Match Score
+                    </div>
+                  </div>
+                </div>
 
-  <div class="mt-4">
-    <div class="fw-semibold mb-2">
-      AI phân tích:
-    </div>
+                <div class="mt-4">
+                  <div class="fw-semibold mb-2">
+                    AI phân tích:
+                  </div>
 
-    <div class="d-flex flex-column gap-2">
-      <div
-        v-for="(reason, idx) in item.reasons"
-        :key="idx"
-        class="reason-item"
-      >
-        <i class="bi bi-check-circle-fill text-success me-2"></i>
-        {{ reason }}
-      </div>
-    </div>
-  </div>
-</div>
+                  <div class="d-flex flex-column gap-2">
+                    <div v-for="(reason, idx) in item.reasons" :key="idx" class="reason-item">
+                      <i class="bi bi-check-circle-fill text-success me-2"></i>
+                      {{ reason }}
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               <div class="alert alert-light border small mb-0">
                 <i class="bi bi-info-circle text-danger me-1"></i>
@@ -519,10 +410,7 @@
               </div>
             </div>
 
-            <div
-              v-if="errorMessage"
-              class="alert alert-danger rounded-4 mt-4 mb-0"
-            >
+            <div v-if="errorMessage" class="alert alert-danger rounded-4 mt-4 mb-0">
               {{ errorMessage }}
             </div>
           </div>
@@ -774,7 +662,7 @@ export default {
 
         this.$toast.error(
           error?.response?.data?.message ||
-            "Không thể lưu donor đề xuất!"
+          "Không thể lưu donor đề xuất!"
         );
       } finally {
         this.savingRecommendations = false;
