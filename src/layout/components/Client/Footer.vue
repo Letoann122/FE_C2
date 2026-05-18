@@ -77,7 +77,7 @@
         <div class="col-md-3">
           <h6 class="fw-bold text-white mb-3">Liên hệ</h6>
           <p class="text-white-50 mb-2">
-            <i class="bi bi-envelope-fill text-danger me-2"></i> info@sbdd.com
+            <i class="bi bi-envelope-fill text-danger me-2"></i> info@sbds.com
           </p>
           <p class="text-white-50 mb-2">
             <i class="bi bi-telephone-fill text-danger me-2"></i> 1900 1234
@@ -92,8 +92,7 @@
 
       <!-- Dòng bản quyền -->
       <div class="text-center mt-4 pt-3 border-top border-secondary text-white-50 small">
-
-        © 2025 Smart Blood Donation System. Tất cả quyền được bảo lưu.
+        © 2026 Smart Blood Donation System. Tất cả quyền được bảo lưu.
       </div>
     
     </div> 

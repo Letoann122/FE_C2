@@ -48,9 +48,9 @@
             <div class="detail-row">
               <div class="small text-muted">Ca hiến máu</div>
               <div class="fw-semibold">{{ timeSlotLabel }}</div>
-              <div v-if="slotCapacityLabel" class="small text-danger mt-1">
+              <!-- <div v-if="slotCapacityLabel" class="small text-danger mt-1">
                 Slot: {{ slotCapacityLabel }}
-              </div>
+              </div> -->
             </div>
 
             <div class="detail-row">
@@ -741,13 +741,18 @@ export default {
     },
 
     stepSubText(stepKey) {
-      const currentIndex = this.statusIndex(this.appointment?.status);
-      const stepIndex = this.statusIndex(stepKey);
+  const currentStatus = this.appointment?.status;
+  const currentIndex = this.statusIndex(currentStatus);
+  const stepIndex = this.statusIndex(stepKey);
 
-      if (stepIndex < currentIndex) return "Hoàn thành";
-      if (stepIndex === currentIndex) return "Đang xử lý";
-      return "Chờ đến lượt";
-    },
+  if (currentStatus === "COMPLETED" && stepKey === "COMPLETED") {
+    return "Hoàn thành";
+  }
+
+  if (stepIndex < currentIndex) return "Hoàn thành";
+  if (stepIndex === currentIndex) return "Đang xử lý";
+  return "Chờ đến lượt";
+},
 
     formatDateTime(value) {
       if (!value) return "Không có dữ liệu";

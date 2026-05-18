@@ -1,25 +1,14 @@
 <template>
   <div class="top-wrapper">
-    <nav
-      ref="nav"
-      class="navbar navbar-expand-lg bg-white"
-      :class="{ 'fixed-top shadow-sm': isSticky }"
-    >
+    <nav ref="nav" class="navbar navbar-expand-lg bg-white" :class="{ 'fixed-top shadow-sm': isSticky }">
       <div class="container-fluid">
         <router-link class="navbar-brand fw-bold ms-3" to="/home-page">
           <i class="fa-solid fa-heart text-danger"></i>
           Smart Blood Donation
         </router-link>
 
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarSupportedContent"
-          aria-controls="navbarSupportedContent"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+          aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
 
@@ -27,71 +16,43 @@
           <!-- MENU -->
           <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
             <li class="nav-item mx-2">
-              <router-link
-                class="nav-link"
-                to="/home-page"
-                exact-active-class="active"
-              >
+              <router-link class="nav-link" to="/home-page" exact-active-class="active">
                 Trang chủ
               </router-link>
             </li>
 
             <li class="nav-item mx-2">
-              <router-link
-                class="nav-link"
-                to="/about"
-                exact-active-class="active"
-              >
+              <router-link class="nav-link" to="/about" exact-active-class="active">
                 Giới thiệu
               </router-link>
             </li>
 
             <li class="nav-item mx-2">
-              <router-link
-                class="nav-link"
-                to="/news"
-                exact-active-class="active"
-              >
+              <router-link class="nav-link" to="/news" exact-active-class="active">
                 Tin tức
               </router-link>
             </li>
 
             <li class="nav-item mx-2">
-              <router-link
-                class="nav-link"
-                to="/guide-health"
-                exact-active-class="active"
-              >
+              <router-link class="nav-link" to="/guide-health" exact-active-class="active">
                 Hướng dẫn sức khoẻ
               </router-link>
             </li>
 
             <li class="nav-item mx-2">
-              <router-link
-                class="nav-link"
-                to="/contact"
-                exact-active-class="active"
-              >
+              <router-link class="nav-link" to="/contact" exact-active-class="active">
                 Liên hệ
               </router-link>
             </li>
 
             <li v-if="isLoggedIn" class="nav-item mx-2">
-              <router-link
-                class="nav-link"
-                to="/register-blooddonation"
-                exact-active-class="active"
-              >
+              <router-link class="nav-link" to="/register-blooddonation" exact-active-class="active">
                 Đặt lịch
               </router-link>
             </li>
 
             <li v-if="isLoggedIn" class="nav-item mx-2">
-              <router-link
-                class="nav-link"
-                to="/find-nearby"
-                exact-active-class="active"
-              >
+              <router-link class="nav-link" to="/find-nearby" exact-active-class="active">
                 Tìm điểm hiến
               </router-link>
             </li>
@@ -108,23 +69,14 @@
             </router-link>
           </div>
 
-          <div
-            v-if="isLoggedIn"
-            class="me-3 position-relative"
-          >
-            <router-link
-              to="/notification"
-              class="text-decoration-none text-dark position-relative"
-              @click="
-                unreadNotificationCount = 0
-              "
-            >
+          <div v-if="isLoggedIn" class="me-3 position-relative">
+            <router-link to="/notification" class="text-decoration-none text-dark position-relative" @click="
+              unreadNotificationCount = 0
+              ">
               <i class="bi bi-bell fs-5"></i>
 
-              <span
-                v-if="unreadNotificationCount > 0"
-                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-              >
+              <span v-if="unreadNotificationCount > 0"
+                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                 {{
                   unreadNotificationCount > 99
                     ? "99+"
@@ -135,44 +87,27 @@
           </div>
 
           <div v-if="isLoggedIn" class="dropdown">
-            <a
-              class="d-flex align-items-center text-decoration-none dropdown-toggle text-secondary fw-semibold"
-              href="#"
-              data-bs-toggle="dropdown"
-              :class="{ active: isAccountActive }"
-              @click.prevent
-            >
+            <a class="d-flex align-items-center text-decoration-none dropdown-toggle text-secondary fw-semibold"
+              href="#" data-bs-toggle="dropdown" :class="{ active: isAccountActive }" @click.prevent>
               Xin chào,
               {{ user.full_name || "Donor" }}
             </a>
 
             <ul class="dropdown-menu dropdown-menu-end">
               <li>
-                <router-link
-                  class="dropdown-item"
-                  to="/my-appointments"
-                >
-                  <i class="bi bi-calendar-check me-2"></i>
+                <router-link class="dropdown-item" to="/my-appointments">
                   Lịch hẹn của tôi
                 </router-link>
               </li>
 
               <li>
-                <router-link
-                  class="dropdown-item"
-                  to="/blood-donation-history"
-                >
-                  <i class="bi bi-clock-history me-2"></i>
+                <router-link class="dropdown-item" to="/blood-donation-history">
                   Lịch sử hiến máu
                 </router-link>
               </li>
 
               <li>
-                <router-link
-                  class="dropdown-item"
-                  to="/notification"
-                >
-                  <i class="bi bi-bell me-2"></i>
+                <router-link class="dropdown-item" to="/notification">
                   Thông báo
                 </router-link>
               </li>
@@ -182,21 +117,13 @@
               </li>
 
               <li>
-                <router-link
-                  class="dropdown-item"
-                  to="/profile"
-                >
-                  <i class="bi bi-person me-2"></i>
+                <router-link class="dropdown-item" to="/profile">
                   Hồ sơ cá nhân
                 </router-link>
               </li>
 
               <li>
-                <router-link
-                  class="dropdown-item"
-                  to="/account-security"
-                >
-                  <i class="bi bi-shield-lock me-2"></i>
+                <router-link class="dropdown-item" to="/account-security">
                   Bảo mật tài khoản
                 </router-link>
               </li>
@@ -206,11 +133,7 @@
               </li>
 
               <li>
-                <a
-                  class="dropdown-item text-danger"
-                  @click="logout"
-                >
-                  <i class="bi bi-box-arrow-right me-2"></i>
+                <a class="dropdown-item text-danger" @click="logout">
                   Đăng xuất
                 </a>
               </li>
@@ -220,10 +143,7 @@
       </div>
     </nav>
 
-    <div
-      v-show="isSticky"
-      :style="{ height: navHeight + 'px' }"
-    ></div>
+    <div v-show="isSticky" :style="{ height: navHeight + 'px' }"></div>
   </div>
 </template>
 
@@ -383,7 +303,7 @@ export default {
 
           this.$toast.success(
             notification.title ||
-              "Thông báo mới"
+            "Thông báo mới"
           );
         }
       );
@@ -443,7 +363,7 @@ export default {
   font-weight: 700;
 }
 
-.dropdown > a.active {
+.dropdown>a.active {
   color: #dc3545 !important;
 }
 
