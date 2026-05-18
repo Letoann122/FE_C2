@@ -50,7 +50,7 @@
         <li class="nav-item">
           <router-link to="/admin/blood-inventory" class="nav-link" exact-active-class="is-active">
             <div class="parent-icon"><i class="fa-solid fa-droplet"></i></div>
-            <div class="menu-title">Quản lý kho máu</div>
+            <div class="menu-title">Kho máu</div>
           </router-link>
         </li>
 
