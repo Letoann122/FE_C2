@@ -109,7 +109,7 @@
                   <th>Số lượng</th>
                   <th>Ngày nhập</th>
                   <th>Hạn sử dụng</th>
-                  <th>Trạng thái DB</th>
+                  <th>Tình trạng</th>
                   <th>Cảnh báo hạn</th>
                   <th>Ưu tiên hạn dùng</th>
                   <th class="text-end">Thao tác</th>

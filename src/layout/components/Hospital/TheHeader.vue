@@ -16,13 +16,16 @@
         <button
           class="navbar-toggler"
           type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarSupportedContent"
+          @click="mobileOpen = !mobileOpen"
         >
           <span class="navbar-toggler-icon"></span>
         </button>
 
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <div
+          class="collapse navbar-collapse"
+          :class="{ show: mobileOpen }"
+          id="navbarSupportedContent"
+        >
           <!-- NAV MENU -->
           <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
             <li class="nav-item mx-2">
@@ -30,49 +33,54 @@
                 class="nav-link"
                 to="/Hospital/dashboard"
                 exact-active-class="active"
+                @click="closeAllMenus"
               >
                 Dashboard
               </router-link>
             </li>
 
-            <!-- AI Emergency -->
             <li class="nav-item mx-2">
               <router-link
                 class="nav-link"
                 to="/Hospital/emergency-ai"
                 exact-active-class="active"
+                @click="closeAllMenus"
               >
                 AI Emergency
               </router-link>
             </li>
 
-            <!-- Dropdown: Lịch & Quy trình -->
-            <li class="nav-item dropdown mx-2">
-              <a
-                class="nav-link dropdown-toggle"
-                href="#"
-                data-bs-toggle="dropdown"
+            <!-- Dropdown: Hiến máu -->
+            <li class="nav-item dropdown mx-2" :class="{ show: openMenu === 'donation' }">
+              <button
+                type="button"
+                class="nav-link dropdown-toggle btn btn-link nav-dropdown-btn"
                 :class="{ active: isDonationFlowActive }"
-                @click.prevent
+                @click.stop="toggleMenu('donation')"
               >
                 Hiến máu
-              </a>
+              </button>
 
-              <ul class="dropdown-menu">
+              <ul class="dropdown-menu" :class="{ show: openMenu === 'donation' }">
                 <li>
-                  <router-link class="dropdown-item" to="/Hospital/check-booking">
+                  <router-link class="dropdown-item" to="/Hospital/check-booking" @click="closeAllMenus">
                     Quản lý đặt lịch
                   </router-link>
                 </li>
 
                 <li>
-                  <router-link class="dropdown-item" to="/Hospital/donation-process">
-                    Quy trình hiến máu
+                  <router-link class="dropdown-item" to="/Hospital/check-in-scanner" @click="closeAllMenus">
+                    Quét mã check-in
                   </router-link>
                 </li>
 
                 <li>
-                  <router-link class="dropdown-item" to="/Hospital/blood-testing">
+                  <router-link class="dropdown-item" to="/Hospital/today-checked-in" @click="closeAllMenus">
+                    Check-in hôm nay
+                  </router-link>
+                </li>
+                <li>
+                  <router-link class="dropdown-item" to="/Hospital/blood-testing" @click="closeAllMenus">
                     Kiểm định máu
                   </router-link>
                 </li>
@@ -80,26 +88,25 @@
             </li>
 
             <!-- Dropdown: Kho máu -->
-            <li class="nav-item dropdown mx-2">
-              <a
-                class="nav-link dropdown-toggle"
-                href="#"
-                data-bs-toggle="dropdown"
+            <li class="nav-item dropdown mx-2" :class="{ show: openMenu === 'inventory' }">
+              <button
+                type="button"
+                class="nav-link dropdown-toggle btn btn-link nav-dropdown-btn"
                 :class="{ active: isInventoryActive }"
-                @click.prevent
+                @click.stop="toggleMenu('inventory')"
               >
                 Kho máu
-              </a>
+              </button>
 
-              <ul class="dropdown-menu">
+              <ul class="dropdown-menu" :class="{ show: openMenu === 'inventory' }">
                 <li>
-                  <router-link class="dropdown-item" to="/Hospital/blood-inventory">
+                  <router-link class="dropdown-item" to="/Hospital/blood-inventory" @click="closeAllMenus">
                     Quản lý kho máu
                   </router-link>
                 </li>
 
                 <li>
-                  <router-link class="dropdown-item" to="/Hospital/blood-inventory/log">
+                  <router-link class="dropdown-item" to="/Hospital/blood-inventory/log" @click="closeAllMenus">
                     Nhật ký kho máu
                   </router-link>
                 </li>
@@ -111,32 +118,32 @@
                 class="nav-link"
                 to="/Hospital/donor-management"
                 exact-active-class="active"
+                @click="closeAllMenus"
               >
                 Quản lý Donor
               </router-link>
             </li>
 
             <!-- Dropdown: Chiến dịch -->
-            <li class="nav-item dropdown mx-2">
-              <a
-                class="nav-link dropdown-toggle"
-                href="#"
-                data-bs-toggle="dropdown"
+            <li class="nav-item dropdown mx-2" :class="{ show: openMenu === 'campaign' }">
+              <button
+                type="button"
+                class="nav-link dropdown-toggle btn btn-link nav-dropdown-btn"
                 :class="{ active: isCampaignActive || isNewsActive }"
-                @click.prevent
+                @click.stop="toggleMenu('campaign')"
               >
                 Chiến dịch
-              </a>
+              </button>
 
-              <ul class="dropdown-menu">
+              <ul class="dropdown-menu" :class="{ show: openMenu === 'campaign' }">
                 <li>
-                  <router-link class="dropdown-item" to="/Hospital/campaign-management">
+                  <router-link class="dropdown-item" to="/Hospital/campaign-management" @click="closeAllMenus">
                     Quản lý chiến dịch
                   </router-link>
                 </li>
 
                 <li>
-                  <router-link class="dropdown-item" to="/Hospital/news">
+                  <router-link class="dropdown-item" to="/Hospital/news" @click="closeAllMenus">
                     Tin tức
                   </router-link>
                 </li>
@@ -144,26 +151,25 @@
             </li>
 
             <!-- Dropdown: Hỗ trợ -->
-            <li class="nav-item dropdown mx-2">
-              <a
-                class="nav-link dropdown-toggle"
-                href="#"
-                data-bs-toggle="dropdown"
+            <li class="nav-item dropdown mx-2" :class="{ show: openMenu === 'support' }">
+              <button
+                type="button"
+                class="nav-link dropdown-toggle btn btn-link nav-dropdown-btn"
                 :class="{ active: isSupportActive }"
-                @click.prevent
+                @click.stop="toggleMenu('support')"
               >
                 Hỗ trợ
-              </a>
+              </button>
 
-              <ul class="dropdown-menu">
+              <ul class="dropdown-menu" :class="{ show: openMenu === 'support' }">
                 <li>
-                  <router-link class="dropdown-item" to="/Hospital/support">
+                  <router-link class="dropdown-item" to="/Hospital/support" @click="closeAllMenus">
                     Tư vấn & Hỗ trợ
                   </router-link>
                 </li>
 
                 <li>
-                  <router-link class="dropdown-item" to="/Hospital/leaderboard">
+                  <router-link class="dropdown-item" to="/Hospital/leaderboard" @click="closeAllMenus">
                     Bảng xếp hạng
                   </router-link>
                 </li>
@@ -171,20 +177,19 @@
             </li>
 
             <!-- Dropdown: Báo cáo -->
-            <li class="nav-item dropdown mx-2">
-              <a
-                class="nav-link dropdown-toggle"
-                href="#"
-                data-bs-toggle="dropdown"
+            <li class="nav-item dropdown mx-2" :class="{ show: openMenu === 'report' }">
+              <button
+                type="button"
+                class="nav-link dropdown-toggle btn btn-link nav-dropdown-btn"
                 :class="{ active: isReportActive }"
-                @click.prevent
+                @click.stop="toggleMenu('report')"
               >
                 Báo cáo
-              </a>
+              </button>
 
-              <ul class="dropdown-menu">
+              <ul class="dropdown-menu" :class="{ show: openMenu === 'report' }">
                 <li>
-                  <router-link class="dropdown-item" to="/Hospital/report">
+                  <router-link class="dropdown-item" to="/Hospital/report" @click="closeAllMenus">
                     Báo cáo & Thống kê
                   </router-link>
                 </li>
@@ -194,31 +199,39 @@
 
           <!-- AUTH -->
           <div v-if="!isLoggedIn" class="d-flex">
-            <router-link class="btn btn-outline-secondary me-2" to="/login">
+            <router-link class="btn btn-outline-secondary me-2" to="/login" @click="closeAllMenus">
               Đăng nhập
             </router-link>
           </div>
 
-          <div v-else class="dropdown">
-            <a
-              class="d-flex align-items-center text-decoration-none dropdown-toggle text-secondary fw-semibold"
-              href="#"
-              data-bs-toggle="dropdown"
+          <div v-else class="dropdown" :class="{ show: openMenu === 'user' }">
+            <button
+              type="button"
+              class="d-flex align-items-center text-decoration-none dropdown-toggle text-secondary fw-semibold btn btn-link nav-dropdown-btn"
+              @click.stop="toggleMenu('user')"
             >
               Xin chào, {{ user.full_name }}
-            </a>
+            </button>
 
-            <ul class="dropdown-menu dropdown-menu-end">
+            <ul class="dropdown-menu dropdown-menu-end" :class="{ show: openMenu === 'user' }">
               <li>
-                <router-link class="dropdown-item" to="/Hospital/profile">
+                <router-link class="dropdown-item" to="/Hospital/profile" @click="closeAllMenus">
                   Thông tin cá nhân
                 </router-link>
               </li>
 
               <li>
-                <a class="dropdown-item text-danger" @click="logout">
+                <router-link class="dropdown-item" to="/Hospital/doi-mat-khau" @click="closeAllMenus">
+                  Đổi mật khẩu
+                </router-link>
+              </li>
+
+              <li><hr class="dropdown-divider" /></li>
+
+              <li>
+                <button type="button" class="dropdown-item text-danger" @click="logout">
                   Đăng xuất
-                </a>
+                </button>
               </li>
             </ul>
           </div>
@@ -243,6 +256,9 @@ export default {
       isSticky: false,
       navHeight: 0,
       stickyOffset: 10,
+      openMenu: null,
+      mobileOpen: false,
+      lastStickyState: false,
     };
   },
 
@@ -250,6 +266,8 @@ export default {
     isDonationFlowActive() {
       return (
         this.$route.path.startsWith("/Hospital/check-booking") ||
+        this.$route.path.startsWith("/Hospital/check-in-scanner") ||
+        this.$route.path.startsWith("/Hospital/today-checked-in") ||
         this.$route.path.startsWith("/Hospital/donation-process") ||
         this.$route.path.startsWith("/Hospital/blood-testing")
       );
@@ -279,14 +297,23 @@ export default {
     },
   },
 
+  watch: {
+    "$route.path"() {
+      this.closeAllMenus();
+    },
+  },
+
   mounted() {
     this.checkLoginDoctor();
     this.handleSticky();
-    window.addEventListener("scroll", this.handleSticky);
+
+    window.addEventListener("scroll", this.handleSticky, { passive: true });
+    document.addEventListener("click", this.closeAllMenus);
   },
 
   unmounted() {
     window.removeEventListener("scroll", this.handleSticky);
+    document.removeEventListener("click", this.closeAllMenus);
   },
 
   methods: {
@@ -300,7 +327,7 @@ export default {
         if (res.data.status) {
           this.isLoggedIn = true;
           this.user = {
-            full_name: res.data.ho_ten,
+            full_name: res.data.ho_ten || res.data.full_name || "bác sĩ",
           };
         } else {
           localStorage.removeItem("token_doctor");
@@ -314,9 +341,18 @@ export default {
       }
     },
 
+    toggleMenu(menuName) {
+      this.openMenu = this.openMenu === menuName ? null : menuName;
+    },
+
+    closeAllMenus() {
+      this.openMenu = null;
+    },
+
     logout() {
       localStorage.removeItem("token_doctor");
       this.isLoggedIn = false;
+      this.closeAllMenus();
       this.$toast.success("Đăng xuất thành công!");
       this.$router.push("/login");
     },
@@ -325,8 +361,13 @@ export default {
       const nav = this.$refs.nav;
       if (!nav) return;
 
-      this.navHeight = nav.offsetHeight;
-      this.isSticky = window.scrollY > this.stickyOffset;
+      const nextSticky = window.scrollY > this.stickyOffset;
+
+      if (nextSticky !== this.lastStickyState) {
+        this.lastStickyState = nextSticky;
+        this.isSticky = nextSticky;
+        this.navHeight = nav.offsetHeight;
+      }
     },
   },
 };
@@ -335,6 +376,7 @@ export default {
 <style scoped>
 .navbar {
   transition: box-shadow 0.2s ease;
+  z-index: 1030;
 }
 
 .nav-link.active {
@@ -342,8 +384,54 @@ export default {
   font-weight: bold;
 }
 
-.dropdown-menu a:hover {
+.nav-dropdown-btn {
+  border: 0;
+  background: transparent;
+  padding: 0.5rem 0;
+  color: inherit;
+  box-shadow: none !important;
+}
+
+.nav-dropdown-btn:hover,
+.nav-dropdown-btn:focus {
+  color: #dc3545;
+  text-decoration: none;
+}
+
+.dropdown-menu {
+  margin-top: 0;
+}
+
+.dropdown-menu.show {
+  display: block;
+}
+
+.dropdown-menu a:hover,
+.dropdown-menu button:hover {
   background-color: #f8d7da;
   color: #842029;
+}
+
+@media (min-width: 992px) {
+  .navbar .dropdown-menu {
+    position: absolute;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .navbar-nav {
+    padding-top: 12px;
+  }
+
+  .dropdown-menu {
+    border: 0;
+    box-shadow: none;
+    padding-left: 12px;
+  }
+
+  .nav-dropdown-btn {
+    width: 100%;
+    text-align: left;
+  }
 }
 </style>

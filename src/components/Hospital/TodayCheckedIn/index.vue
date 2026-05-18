@@ -84,7 +84,7 @@
                 ></div>
               </div>
               <div class="small text-muted mt-1">
-                Realtime khi donor đặt / huỷ lịch
+                Tự động cập nhật khi người hiến đặt lịch hoặc huỷ lịch.
               </div>
             </div>
           </div>
