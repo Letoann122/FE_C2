@@ -11,7 +11,7 @@
               Check-in bằng QR Code
             </h4>
             <p class="text-muted mb-0">
-              Bác sĩ dùng camera để quét mã QR của người hiến máu.
+              Bác sĩ dùng camera hoặc máy scanner để quét mã QR của người hiến máu.
             </p>
           </div>
 
@@ -48,8 +48,8 @@
 
             <div class="alert alert-info rounded-4 mt-3 mb-0 small">
               <i class="bi bi-info-circle me-1"></i>
-              Nếu trình duyệt hỏi quyền camera, chọn <b>Allow / Cho phép</b>.
-              Trên điện thoại nên dùng camera sau để quét rõ hơn.
+              Nếu dùng camera, chọn <b>Allow / Cho phép</b>. Nếu dùng máy scanner USB,
+              click vào ô mã QR bên phải rồi quét, máy sẽ tự Enter và check-in.
             </div>
           </div>
 
@@ -60,10 +60,12 @@
 
                 <label class="form-label fw-semibold">Mã QR đọc được</label>
                 <textarea
+                  ref="qrInput"
                   v-model="qr_code"
                   class="form-control"
                   rows="4"
-                  placeholder="Camera quét xong sẽ tự điền mã vào đây"
+                  placeholder="Quét bằng máy scanner hoặc nhập mã QR tại đây"
+                  @keyup.enter.prevent="handleScannerEnter"
                 ></textarea>
 
                 <button
@@ -201,6 +203,10 @@ export default {
 
   mounted() {
     this.html5QrCode = new Html5Qrcode("qr-reader");
+
+    this.$nextTick(() => {
+      this.$refs.qrInput?.focus();
+    });
   },
 
   beforeUnmount() {
@@ -270,6 +276,20 @@ export default {
 
     onScanFailure() {},
 
+    async handleScannerEnter() {
+      if (this.loading || this.isProcessing) return;
+
+      const qrCode = String(this.qr_code || "").trim();
+
+      if (!qrCode) {
+        this.errorMessage = "Chưa có mã QR để check-in!";
+        return;
+      }
+
+      this.isProcessing = true;
+      await this.submitCheckin(qrCode);
+    },
+
     async submitCheckin(qrCode) {
       this.errorMessage = "";
       this.successMessage = "";
@@ -277,6 +297,7 @@ export default {
 
       if (!qrCode || !String(qrCode).trim()) {
         this.errorMessage = "Chưa có mã QR để check-in!";
+        this.isProcessing = false;
         return;
       }
 
@@ -299,6 +320,10 @@ export default {
       } finally {
         this.loading = false;
         this.isProcessing = false;
+
+        this.$nextTick(() => {
+          this.$refs.qrInput?.focus();
+        });
       }
     },
 
@@ -308,6 +333,10 @@ export default {
       this.successMessage = "";
       this.errorMessage = "";
       this.isProcessing = false;
+
+      this.$nextTick(() => {
+        this.$refs.qrInput?.focus();
+      });
     },
 
     formatDateTime(value) {
