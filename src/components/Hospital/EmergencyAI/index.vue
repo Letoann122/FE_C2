@@ -14,11 +14,6 @@
               Hệ thống đề xuất donor phù hợp cho yêu cầu máu khẩn cấp.
             </p>
           </div>
-
-          <div class="badge bg-danger fs-6 px-3 py-2">
-            <i class="bi bi-cpu-fill me-1"></i>
-            AI Matching Engine
-          </div>
         </div>
       </div>
     </div>
@@ -321,7 +316,7 @@
               </div>
 
               <div class="text-muted">
-                Hãy tạo emergency request và chạy AI recommendation.
+                Hãy tạo yêu cầu khẩn cấp.
               </div>
             </div>
 

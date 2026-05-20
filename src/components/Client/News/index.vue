@@ -50,7 +50,6 @@
         </div>
       </div>
 
-      <!-- Danh sách tin -->
       <div class="col-lg-10">
         <div class="card border-0 bg-light p-3">
           <div class="d-flex align-items-center mb-3">
@@ -58,7 +57,6 @@
             <h3 class="ms-2 mb-0">Tin tức mới nhất</h3>
           </div>
 
-          <!-- Grid tin -->
           <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
             <div v-for="(news, index) in newsList" :key="index">
               <div class="card h-100 shadow-sm">
@@ -134,7 +132,6 @@
           </nav>
         </div>
 
-        <!-- CAMPAIGNS -->
         <div class="card border-0 bg-white mt-4 shadow-sm">
           <div class="card-header bg-danger text-white fw-bold d-flex align-items-center justify-content-between">
             <div>
@@ -173,15 +170,26 @@
                     {{ formatDate(c.start_date) }} - {{ formatDate(c.end_date) }}
                   </div>
 
-                  <span class="badge mt-2" :class="statusBadgeClass(c.status)">
-                    {{ statusLabel(c.status) }}
+                  <span
+                    class="badge mt-2"
+                    :class="statusBadgeClass(getRealCampaignStatus(c))"
+                  >
+                    {{ statusLabel(getRealCampaignStatus(c)) }}
                   </span>
                 </div>
 
                 <div class="d-flex gap-2">
-                  <router-link :to="`/campaigns/${c.id}`" class="btn btn-danger btn-sm">
+                  <router-link
+                    v-if="isRegisterableCampaign(c)"
+                    :to="`/campaigns/${c.id}`"
+                    class="btn btn-danger btn-sm"
+                  >
                     Đăng ký tham gia
                   </router-link>
+
+                  <button v-else class="btn btn-secondary btn-sm" disabled>
+                    Đã kết thúc
+                  </button>
                 </div>
               </div>
             </div>
@@ -191,7 +199,6 @@
             </div>
           </div>
         </div>
-        <!-- /CAMPAIGNS -->
       </div>
     </div>
   </div>
@@ -206,7 +213,6 @@ const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
 export default {
   data() {
     return {
-      // news
       newsList: [],
       currentPage: 1,
       totalPages: 1,
@@ -214,7 +220,6 @@ export default {
       dateEnd: "",
       defaultImage: new URL("../../../assets/img/hienmau.jpg", import.meta.url).href,
 
-      // campaigns
       campaignStatus: "active",
       campaigns: [],
       loadingCampaigns: false,
@@ -223,7 +228,6 @@ export default {
   },
 
   methods: {
-    // ---------------- NEWS ----------------
     async fetchNews(page = 1) {
       try {
         const params = { page, limit: 8 };
@@ -260,7 +264,6 @@ export default {
       return new Date(date).toLocaleDateString("vi-VN");
     },
 
-    // --------------- CAMPAIGNS ---------------
     async fetchCampaigns() {
       this.loadingCampaigns = true;
       this.campaignError = "";
@@ -271,12 +274,29 @@ export default {
         });
 
         if (res.data?.status) {
-          this.campaigns = (res.data.data || [])
-            .filter((item) => ["upcoming", "running"].includes(item.status))
+          const list = res.data.data || [];
+
+          this.campaigns = list
+            .filter((item) => {
+              const realStatus = this.getRealCampaignStatus(item);
+
+              if (this.campaignStatus === "active") {
+                return ["upcoming", "running"].includes(realStatus);
+              }
+
+              return realStatus === this.campaignStatus;
+            })
             .sort((a, b) => {
+              const statusA = this.getRealCampaignStatus(a);
+              const statusB = this.getRealCampaignStatus(b);
+
+              if (statusA === "running" && statusB !== "running") return -1;
+              if (statusA !== "running" && statusB === "running") return 1;
+
               const dateA = new Date(a.start_date || 0).getTime();
               const dateB = new Date(b.start_date || 0).getTime();
-              return dateB - dateA;
+
+              return dateA - dateB;
             });
         } else {
           this.campaigns = [];
@@ -289,6 +309,29 @@ export default {
       } finally {
         this.loadingCampaigns = false;
       }
+    },
+
+    getRealCampaignStatus(c) {
+      if (!c?.start_date || !c?.end_date) {
+        return c?.status || "-";
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const start = new Date(c.start_date);
+      start.setHours(0, 0, 0, 0);
+
+      const end = new Date(c.end_date);
+      end.setHours(23, 59, 59, 999);
+
+      if (today < start) return "upcoming";
+      if (today >= start && today <= end) return "running";
+      return "ended";
+    },
+
+    isRegisterableCampaign(c) {
+      return this.getRealCampaignStatus(c) !== "ended";
     },
 
     getCampaignLocation(c) {
@@ -313,12 +356,14 @@ export default {
     statusLabel(s) {
       if (s === "upcoming") return "Sắp diễn ra";
       if (s === "running") return "Đang diễn ra";
+      if (s === "ended") return "Đã kết thúc";
       return s || "-";
     },
 
     statusBadgeClass(s) {
       if (s === "running") return "bg-danger";
       if (s === "upcoming") return "bg-warning text-dark";
+      if (s === "ended") return "bg-secondary";
       return "bg-light text-dark border";
     },
   },
