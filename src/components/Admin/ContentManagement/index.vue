@@ -329,9 +329,10 @@ export default {
     };
   },
 
-  mounted() {
-    this.reloadAll();
-  },
+  async mounted() {
+  await this.reloadAll();
+  this.openNewsFromDashboard();
+},
 
   methods: {
     fmtDate(d) {
@@ -347,6 +348,30 @@ export default {
     async reloadAll() {
       await Promise.all([this.fetchPending(), this.fetchAllNews()]);
     },
+    openNewsFromDashboard() {
+  const id = Number(this.$route.query.openNews || 0);
+  if (!id) return;
+
+  const item =
+    this.pendingNews.find((x) => Number(x.id) === id) ||
+    this.allNews.find((x) => Number(x.id) === id);
+
+  if (!item) {
+    this.$toast?.error("Không tìm thấy bài viết cần xem");
+    return;
+  }
+
+  this.selected = item;
+
+  this.$nextTick(() => {
+    const modalEl = document.getElementById("previewNewsModal");
+
+    if (modalEl && window.bootstrap) {
+      const modal = new window.bootstrap.Modal(modalEl);
+      modal.show();
+    }
+  });
+},
 
     async fetchPending() {
       this.loadingPending = true;

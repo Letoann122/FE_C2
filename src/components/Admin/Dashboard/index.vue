@@ -87,36 +87,25 @@
           <div class="card-header bg-white p-0 border-bottom-0">
             <ul class="nav nav-tabs px-3 pt-3 border-bottom-0" role="tablist">
               <li class="nav-item">
-                <button
-                  type="button"
-                  class="nav-link fw-bold"
-                  :class="activeTab === 'news' ? 'active text-dark' : 'text-muted'"
-                  @click="activeTab = 'news'"
-                >
+                <button type="button" class="nav-link fw-bold"
+                  :class="activeTab === 'news' ? 'active text-dark' : 'text-muted'" @click="activeTab = 'news'">
                   Tin tức
                   <span class="badge bg-danger rounded-pill ms-1">{{ pendingNews.length }}</span>
                 </button>
               </li>
 
               <li class="nav-item">
-                <button
-                  type="button"
-                  class="nav-link fw-bold"
+                <button type="button" class="nav-link fw-bold"
                   :class="activeTab === 'campaigns' ? 'active text-dark' : 'text-muted'"
-                  @click="activeTab = 'campaigns'"
-                >
+                  @click="activeTab = 'campaigns'">
                   Chiến dịch
                   <span class="badge bg-warning text-dark rounded-pill ms-1">{{ pendingCampaigns.length }}</span>
                 </button>
               </li>
 
               <li class="nav-item">
-                <button
-                  type="button"
-                  class="nav-link fw-bold"
-                  :class="activeTab === 'doctors' ? 'active text-dark' : 'text-muted'"
-                  @click="activeTab = 'doctors'"
-                >
+                <button type="button" class="nav-link fw-bold"
+                  :class="activeTab === 'doctors' ? 'active text-dark' : 'text-muted'" @click="activeTab = 'doctors'">
                   Bác sĩ mới
                   <span class="badge bg-secondary rounded-pill ms-1">{{ pendingDoctors.length }}</span>
                 </button>
@@ -144,11 +133,8 @@
                     <td>{{ formatDate(item.date) }}</td>
                     <td class="text-end pe-4">
                       <button class="btn btn-sm btn-outline-primary me-2" @click="viewNews(item.id)">Xem</button>
-                      <button
-                        class="btn btn-sm btn-success"
-                        :disabled="approvingKey === `news-${item.id}`"
-                        @click="approveNews(item.id)"
-                      >
+                      <button class="btn btn-sm btn-success" :disabled="approvingKey === `news-${item.id}`"
+                        @click="approveNews(item.id)">
                         <span v-if="approvingKey === `news-${item.id}`" class="spinner-border spinner-border-sm"></span>
                         <span v-else>Duyệt</span>
                       </button>
@@ -180,11 +166,8 @@
                     <td>{{ formatDate(item.date) }}</td>
                     <td class="text-end pe-4">
                       <button class="btn btn-sm btn-outline-primary me-2" @click="viewCampaign(item.id)">Xem</button>
-                      <button
-                        class="btn btn-sm btn-success"
-                        :disabled="approvingKey === `camp-${item.id}`"
-                        @click="approveCampaign(item.id)"
-                      >
+                      <button class="btn btn-sm btn-success" :disabled="approvingKey === `camp-${item.id}`"
+                        @click="approveCampaign(item.id)">
                         <span v-if="approvingKey === `camp-${item.id}`" class="spinner-border spinner-border-sm"></span>
                         <span v-else>Duyệt</span>
                       </button>
@@ -216,11 +199,8 @@
                     <td>{{ formatDate(item.date) }}</td>
                     <td class="text-end pe-4">
                       <button class="btn btn-sm btn-outline-primary me-2" @click="viewDoctor(item.id)">Xem</button>
-                      <button
-                        class="btn btn-sm btn-success"
-                        :disabled="approvingKey === `doc-${item.id}`"
-                        @click="approveDoctor(item.id)"
-                      >
+                      <button class="btn btn-sm btn-success" :disabled="approvingKey === `doc-${item.id}`"
+                        @click="approveDoctor(item.id)">
                         <span v-if="approvingKey === `doc-${item.id}`" class="spinner-border spinner-border-sm"></span>
                         <span v-else>Duyệt</span>
                       </button>
@@ -419,12 +399,12 @@ export default {
     moreUrl() {
       switch (this.activeTab) {
         case "campaigns":
-          return "/admin/campaigns/pending";
+          return "/admin/create-campaign";
         case "doctors":
           return "/admin/doctor-approve";
         case "news":
         default:
-          return "/admin/news/pending";
+          return "/admin/content-management";
       }
     },
   },
@@ -570,7 +550,12 @@ export default {
 
     // NEWS
     viewNews(id) {
-      this.$router.push(`/admin/news/${id}`);
+      this.$router.push({
+        path: "/admin/content-management",
+        query: {
+          openNews: id,
+        },
+      });
     },
     async approveNews(id) {
       try {
@@ -630,21 +615,34 @@ export default {
 </script>
 
 <style scoped>
-.bg-primary-subtle { background-color: #cfe2ff; }
-.bg-success-subtle { background-color: #d1e7dd; }
-.bg-warning-subtle { background-color: #fff3cd; }
-.bg-danger-subtle  { background-color: #f8d7da; }
+.bg-primary-subtle {
+  background-color: #cfe2ff;
+}
+
+.bg-success-subtle {
+  background-color: #d1e7dd;
+}
+
+.bg-warning-subtle {
+  background-color: #fff3cd;
+}
+
+.bg-danger-subtle {
+  background-color: #f8d7da;
+}
 
 .nav-tabs .nav-link {
   border: none;
   border-bottom: 3px solid transparent;
   color: #6c757d;
 }
+
 .nav-tabs .nav-link.active {
   border-bottom: 3px solid #0d6efd;
   color: #0d6efd !important;
   background: transparent;
 }
+
 .nav-tabs .nav-link:hover {
   border-color: transparent;
   color: #0d6efd;
