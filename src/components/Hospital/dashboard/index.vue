@@ -88,29 +88,39 @@
           </div>
 
           <div class="card-body">
-            <!-- Summary (cụ thể 5 status) -->
+            <!-- Summary -->
             <div class="row text-center">
-              <div class="col-6 col-md-4 col-lg-2 mb-3">
+              <div class="col-6 col-md-4 col-xl mb-3">
                 <h3 class="fw-bold mb-1">{{ formatNumber(appointments.summary.today) }}</h3>
                 <p class="text-muted mb-0 small">Hôm nay</p>
               </div>
-              <div class="col-6 col-md-4 col-lg-2 mb-3">
+
+              <div class="col-6 col-md-4 col-xl mb-3">
                 <h3 class="fw-bold mb-1 text-warning">{{ formatNumber(appointments.summary.requested) }}</h3>
                 <p class="text-muted mb-0 small">Chờ duyệt</p>
               </div>
-              <div class="col-6 col-md-4 col-lg-2 mb-3">
+
+              <div class="col-6 col-md-4 col-xl mb-3">
                 <h3 class="fw-bold mb-1 text-primary">{{ formatNumber(appointments.summary.approved) }}</h3>
                 <p class="text-muted mb-0 small">Đã duyệt</p>
               </div>
-              <div class="col-6 col-md-4 col-lg-2 mb-3">
+
+              <div class="col-6 col-md-4 col-xl mb-3">
                 <h3 class="fw-bold mb-1 text-danger">{{ formatNumber(appointments.summary.rejected) }}</h3>
                 <p class="text-muted mb-0 small">Từ chối</p>
               </div>
-              <div class="col-6 col-md-4 col-lg-2 mb-3">
+
+              <div class="col-6 col-md-4 col-xl mb-3">
+                <h3 class="fw-bold mb-1 text-info">{{ formatNumber(appointments.summary.processing) }}</h3>
+                <p class="text-muted mb-0 small">Đang xử lý</p>
+              </div>
+
+              <div class="col-6 col-md-4 col-xl mb-3">
                 <h3 class="fw-bold mb-1 text-success">{{ formatNumber(appointments.summary.completed) }}</h3>
                 <p class="text-muted mb-0 small">Hoàn thành</p>
               </div>
-              <div class="col-6 col-md-4 col-lg-2 mb-3">
+
+              <div class="col-6 col-md-4 col-xl mb-3">
                 <h3 class="fw-bold mb-1">{{ formatNumber(appointments.summary.cancelled) }}</h3>
                 <p class="text-muted mb-0 small">Đã hủy</p>
               </div>
@@ -256,6 +266,7 @@ export default {
           requested: 0,
           approved: 0,
           rejected: 0,
+          processing: 0,
           completed: 0,
           cancelled: 0,
         },
@@ -265,6 +276,7 @@ export default {
           requested: [],
           approved: [],
           rejected: [],
+          processing: [],
           completed: [],
           cancelled: [],
         },
@@ -299,6 +311,7 @@ export default {
           { label: "Chờ duyệt", data: [] },
           { label: "Đã duyệt", data: [] },
           { label: "Từ chối", data: [] },
+          { label: "Đang xử lý", data: [] },
           { label: "Hoàn thành", data: [] },
           { label: "Huỷ", data: [] },
         ],
@@ -454,7 +467,6 @@ export default {
         appointment_range: this.activeAppointmentFilter,
       };
 
-      // nếu project bạn có token riêng thì bật cái này
       const token =
         localStorage.getItem("token_doctor") ||
         localStorage.getItem("token_hospital") ||
@@ -477,7 +489,6 @@ export default {
             this.campaigns = d.campaigns || this.campaigns;
             this.notifications = d.notifications || [];
 
-            // build charts
             this.buildInventoryChart();
             this.buildAppointmentChart();
 
@@ -506,7 +517,6 @@ export default {
       this.inventoryChartData.datasets[0].data = inUnits;
       this.inventoryChartData.datasets[1].data = outUnits;
 
-      // màu chỉ set ở FE theo ý bạn
       this.inventoryChartData.datasets[0].borderColor = "#36A2EB";
       this.inventoryChartData.datasets[0].backgroundColor = "rgba(54, 162, 235, 0.2)";
       this.inventoryChartData.datasets[0].tension = 0.35;
@@ -524,19 +534,19 @@ export default {
 
       const ds = this.appointmentChartData.datasets;
 
-      // data arrays từ BE trả về (FE chỉ gắn vào)
       ds[0].data = t.requested || [];
       ds[1].data = t.approved || [];
       ds[2].data = t.rejected || [];
-      ds[3].data = t.completed || [];
-      ds[4].data = t.cancelled || [];
+      ds[3].data = t.processing || [];
+      ds[4].data = t.completed || [];
+      ds[5].data = t.cancelled || [];
 
-      // màu FE tự set
       ds[0].backgroundColor = "#FFCE56"; // requested
       ds[1].backgroundColor = "#36A2EB"; // approved
       ds[2].backgroundColor = "#FF6384"; // rejected
-      ds[3].backgroundColor = "#4BC0C0"; // completed
-      ds[4].backgroundColor = "#9966FF"; // cancelled
+      ds[3].backgroundColor = "#17A2B8"; // processing
+      ds[4].backgroundColor = "#4BC0C0"; // completed
+      ds[5].backgroundColor = "#9966FF"; // cancelled
       ds.forEach((x) => (x.borderWidth = 0));
     },
 
@@ -565,7 +575,6 @@ export default {
       return x.toLocaleString("vi-VN");
     },
 
-    // input: YYYY-MM-DD
     formatDateDMY(s) {
       if (!s) return "";
       const str = String(s).slice(0, 10);
